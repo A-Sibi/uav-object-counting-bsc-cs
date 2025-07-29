@@ -1,0 +1,17 @@
+paths:
+  raw: data/raw
+  interim: data/interim
+  processed: data/processed
+  results: experiments
+
+video:
+  frame_step: 5       # uzmi svaki 5. frejm
+
+stitch:
+  feature: ORB
+  reproj_thresh: 4.0
+
+detect:
+  model: yolov8n.pt
+  conf: 0.4
+  iou: 0.5

@@ -1,0 +1,7 @@
+.vscode
+**/__pycache__/
+data/raw
+
+# ignore YOLOv8 weights
+yolov8n.pt
+*.pt
