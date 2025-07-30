@@ -1,14 +1,14 @@
-ENV=parking
 CONFIG=configs/default.yaml
 
 init:
-\tconda create -n $(ENV) python=3.10 -y
+  poetry env use python3.11
+  poetry install
 
 run1:
-\tpython -m src.cli --mode pipeline1 --video data/raw/video.mp4 --config $(CONFIG)
+  poetry run python -m src.cli --mode pipeline1 --video data/raw/video.mp4 --config $(CONFIG)
 
 format:
-\tblack src
+  poetry run black src
 
 clean:
-\trm -rf data/interim/* experiments/*
+  rm -rf data/interim/* experiments/*
