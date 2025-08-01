@@ -6,3 +6,6 @@ data/processed/
 # ignore YOLOv8 weights
 yolov8n.pt
 *.pt
+
+# large files
+*.mp4
