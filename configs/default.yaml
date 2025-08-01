@@ -1,11 +1,13 @@
 paths:
   raw: data/raw
+  interim_frames: data/interim/frames
+  interim_mosaic: data/interim/mosaic.jpg
   interim: data/interim
   processed: data/processed
   results: experiments
 
 video:
-  frame_step: 5       # uzmi svaki 5. frejm
+  frame_step: 5       # take every 5th frame
 
 stitch:
   feature: ORB

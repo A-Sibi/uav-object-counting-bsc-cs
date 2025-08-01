@@ -1,6 +1,7 @@
 .vscode
 **/__pycache__/
-data/raw
+data/interim/
+data/processed/
 
 # ignore YOLOv8 weights
 yolov8n.pt

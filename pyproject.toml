@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Aleksa Sibinović <as1871@student.uni-lj.si>"]
 packages = [
-  { include = "uav_object_counting_bsc_cs" }
+  { include = "src" }
 ]
 
 [tool.poetry.dependencies]

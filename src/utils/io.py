@@ -6,26 +6,43 @@ import cv2
 
 def load_config(path: str) -> dict:
     """
-    Naloži YAML konfiguracijo iz datoteke.
+    Load YAML configuration from a file.
     """
     with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
+    
+    cfg["paths"] = {k: str(Path(v)) for k, v in cfg.get("paths", {}).items()}
+    return cfg
+
 
 def ensure_dir(path: str):
     """
-    Ustvari mapo, če še ne obstaja.
+    Create directory if it doesn't exist.
     """
     Path(path).mkdir(parents=True, exist_ok=True)
 
+
+def save_np_image(image, path: str):
+    """
+    Save an image to the specified path.
+    
+    :param image: Image to save (numpy array).
+    :param path: Path where the image will be saved.
+    """
+    ensure_dir(path)
+    cv2.imwrite(path, image)
+    return None
+
+
 def extract_frames(video_path: str, out_dir: str, step: int = 5) -> list[str]:
     """
-    Iz videa izlušči vsak `step`-ti frejm in ga shrani kot JPEG v `out_dir`.
-    Vrne seznam poti do shranjenih slik.
+    Extract every `step`-th frame from the video and save it as JPEG in `out_dir`.
+    Returns a list of saved image paths.
     """
     ensure_dir(out_dir)
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        raise RuntimeError(f"Ne morem odpreti videa: {video_path}")
+        raise RuntimeError(f"Cannot open video: {video_path}")
 
     saved = []
     idx = 0

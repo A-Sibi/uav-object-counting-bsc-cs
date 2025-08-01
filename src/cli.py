@@ -1,82 +1,74 @@
 # src/cli.py
-
+import sys
 import argparse
-import cv2
-import json
-import numpy as np
 from pathlib import Path
+from src.pipelines import *
+from src.utils.io import load_config
 
-from src.utils.io import load_config, extract_frames, ensure_dir
-from src.stitching.mosaic import build_mosaic
-from src.detection.detector import detect_cars
-from src.mapping.project import project_points
 
 def main():
-    p = argparse.ArgumentParser(description="UAV Object Counting Pipeline")
-    p.add_argument(
-        "--config",
+    parser = argparse.ArgumentParser(description="UAV Object Counting Pipeline")
+    parser.add_argument(
+        "-m", "--mode",
+        choices=[
+            "pipeline1",
+            "pipeline2",
+            "extract",
+            "stitch",
+            "detect",
+            "save_data",
+        ],
+        help=(
+            'Which stage to run.'
+            'Choose "pipeline1" or "pipeline2" for complete processing from video to output;'
+            '"extract", "stitch" and "detect" run specific parts of a pipeline, use for testing;'
+            '"save_data" saves processed data to a new experiment folder.'
+        ),
+    )
+    parser.add_argument(
+        "-c", "--config",
+        type=Path,
         default="configs/default.yaml",
         help="Path to YAML config file"
     )
-    p.add_argument(
-        "--mode",
-        choices=["pipeline1", "stitch", "detect"],
-        default="pipeline1",
-        help="Which stage(s) to run"
-    )
-    p.add_argument(
-        "--video",
-        required=True,
+    parser.add_argument(
+        "-v", "--video",
+        type= Path,
+        default= Path("data/raw/video.mp4"),
         help="Path to input video file"
     )
-    args = p.parse_args()
+    parser.add_argument(
+        "-i", "--test_image",
+        type=Path,
+        default="data/raw/test_image.jpg",
+        help="Path to test image/mosaic for detection"
+    )
+    parser.add_argument(
+        "-s", "--stitch-folder",
+        type=Path,
+        help="Folder containing frames to stitch (defaults to config paths.interim_frames)"
+    )
 
-    # Load configuration
+    args = parser.parse_args()
     cfg = load_config(args.config)
 
-    # 1) Extract frames
-    raw_frames_dir = Path(cfg["paths"]["raw"]) / "frames"
-    frame_paths = extract_frames(
-        args.video,
-        str(raw_frames_dir),
-        cfg["video"]["frame_step"]
-    )
-    frames = [cv2.imread(fp) for fp in frame_paths]
-
-    # 2) (Temporary) dummy homographies for each frame
-    homos = [np.eye(3) for _ in frames]
-
-    # 3) Stitching (if requested)
-    if args.mode in ["stitch", "pipeline1"]:
-        mosaic_img, H_list = build_mosaic(frames, cfg["stitch"])
+    if   args.mode == 'pipeline1':
+        run_pipeline1(args.video, cfg)
+    elif args.mode == 'pipeline2':
+        run_pipeline2(args.video, cfg)
+    elif args.mode == 'extract':
+        run_extract(args.video, cfg)
+    elif args.mode == 'stitch':
+        images_dir = args.stitch_folder or cfg["paths"]["interim_frames"]
+        run_stitch(images_dir, cfg)
+    elif args.mode == 'detect':
+        run_single_image_detect(args.image, cfg)
+    elif args.mode == 'save_data':
+        save_data()
     else:
-        H_list = homos
+        parser.print_help()
+        sys.exit(1)
 
-    # 4) Detection (if requested)
-    if args.mode in ["detect", "pipeline1"]:
-        dets_per_frame = detect_cars(frames, cfg["detect"])
-    else:
-        dets_per_frame = []
-
-    # 5) Mapping & counting (only for detect or pipeline1)
-    points_on_mosaic = []
-    if args.mode in ["detect", "pipeline1"]:
-        points_on_mosaic = project_points(dets_per_frame, H_list)
-
-    # 6) Save results
-    ensure_dir(cfg["paths"]["processed"])
-    processed_dir = Path(cfg["paths"]["processed"])
-
-    # Save mosaic image
-    if args.mode in ["stitch", "pipeline1"]:
-        cv2.imwrite(str(processed_dir / "mosaic.png"), mosaic_img)
-
-    # Save detections JSON
-    if args.mode in ["detect", "pipeline1"]:
-        with open(processed_dir / "cars.json", "w") as f:
-            json.dump(points_on_mosaic, f, indent=2)
-
-    print("Done. Results saved to:", processed_dir)
 
 if __name__ == "__main__":
     main()

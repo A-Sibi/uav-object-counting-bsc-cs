@@ -22,29 +22,27 @@ configs/                # YAML configuration files for setting up pipeline behav
 
 data/
 ├── raw/                # Input videos
-├── interim/            # Extracted frames
-├── processed/          # Pre-processed data if needed
+├── interim/            # Extracted frames, mosaics, temporary files
+├── processed/          # Final outputs, visualizatons, results
 
-experiments/            # Results and logs (e.g. annotated mosaics, CSVs)
+experiments/            # Stored results and logs (e.g. annotated mosaics, CSVs)
+├── exp_001/            # Grouped by experiments
 
 src/                    # Source code
 ├── cli.py              # CLI entry point for executing pipelines
+├── pipelines.py        # Pipeline logic implementation
 ├── detection/
 │   ├── detector.py     # YOLOv8-based car detector
 │   ├── postprocess.py  # Optional post-filtering logic (e.g. NMS adjustments)
-│   └── __init__.py
 ├── eval/               # (Planned) Evaluation metrics and comparison logic
 ├── mapping/
 │   ├── project.py      # (Planned) Mapping frame detections to mosaic coordinates
-│   └── __init__.py
 ├── stitching/
 │   ├── mosaic.py       # Builds stitched image from multiple frames
-│   └── __init__.py
 ├── utils/
 │   ├── io.py           # YAML config loader, frame extractor
-│   ├── vis.py          # (Optional) Visualization helpers
-│   ├── geometry.py     # (Optional) Geometric utilities for transforms
-│   └── __init__.py
+│   ├── vis.py          # Visualization helpers
+│   ├── geometry.py     # Geometric utilities for transforms
 ```
 
 ---
