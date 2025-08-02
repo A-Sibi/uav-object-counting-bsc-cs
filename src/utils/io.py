@@ -1,5 +1,6 @@
 # src/utils/io.py
 
+import numpy as np
 import yaml
 from pathlib import Path
 import cv2
@@ -22,7 +23,7 @@ def ensure_dir(path: str):
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def load_image(image_path: str):
+def load_image(image_path: str) -> np.ndarray:
     """
     Load an image from the specified path using OpenCV.
     
@@ -38,7 +39,7 @@ def load_image(image_path: str):
     return image
 
 
-def save_np_image(image, path: str):
+def save_np_image(image: np.ndarray, path: str) -> None:
     """
     Save an image to the specified path.
     

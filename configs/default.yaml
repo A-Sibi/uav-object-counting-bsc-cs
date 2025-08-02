@@ -8,11 +8,16 @@ paths:
   results: experiments
 
 video:
-  frame_step: 5       # take every 5th frame
+  frame_step: 60       # take every 60th frame
 
-stitch:
+stitch:               # do a research on this
   feature: ORB
   reproj_thresh: 4.0
+  resize_factor: 0.2
+  chunk_size: 3
+  timeout: 300
+  mode: SCANS
+
 
 detect:
   model: yolov8n.pt

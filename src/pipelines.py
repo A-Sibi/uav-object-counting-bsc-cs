@@ -27,15 +27,14 @@ def run_extract(video_path: str, cfg: dict[str, any]) -> None:
 def run_stitch(images_dir: Path, cfg) -> None:
     """
     Run the stitching pipeline on a set of frames.
-    :param images: List of image paths to stitch.
+    :param images_dir: Path to directory of frame images to stitch.
     :param cfg: Configuration dictionary containing stitching parameters.
     """
 
     print("Running Stitching Pipeline...")
     print(f"Stitching images in: {images_dir}")
-
-    frames = [cv2.imread(fp) for fp in images_dir.glob("*.jpg")]
-    mosaic, H_list = build_mosaic(frames, cfg)
+    mosaic, H_list = build_mosaic(images_dir, cfg)
+    print(f"Mosaic built with {len(H_list)} images.")
     save_np_image(mosaic, cfg["paths"]["interim_mosaic"])
     print(f"Mosaic saved to {cfg['paths']['interim_mosaic']}")
     return None

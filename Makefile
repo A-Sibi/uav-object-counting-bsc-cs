@@ -3,9 +3,9 @@
 # Configuration variables
 CONFIG   = configs/default.yaml
 WEIGHTS  = yolov8n.pt
-FRAMES   = data/raw/frames
-IMG      = data/raw/test_image3.jpg
 VIDEO    = data/raw/video1.mp4
+IMG      = data/raw/test_image3.jpg
+FRAMES   = data/interim/frames
 
 .PHONY: init run1 run2 detect stitch logs format clean
 
