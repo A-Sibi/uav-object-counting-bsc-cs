@@ -38,7 +38,7 @@ def main():
         help="Path to input video file"
     )
     parser.add_argument(
-        "-i", "--test_image",
+        "-i", "--image",
         type=Path,
         default="data/raw/test_image.jpg",
         help="Path to test image/mosaic for detection"

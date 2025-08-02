@@ -22,6 +22,22 @@ def ensure_dir(path: str):
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
+def load_image(image_path: str):
+    """
+    Load an image from the specified path using OpenCV.
+    
+    :param image_path: Path to the image file.
+    :return: Loaded image as a numpy array.
+    """
+
+    if not image_path.exists():
+        raise FileNotFoundError(f"Input image not found: {image_path}")
+    image = cv2.imread(str(image_path))
+    if image is None:
+        raise ValueError(f"Failed to load image: {image_path}")
+    return image
+
+
 def save_np_image(image, path: str):
     """
     Save an image to the specified path.
@@ -29,7 +45,9 @@ def save_np_image(image, path: str):
     :param image: Image to save (numpy array).
     :param path: Path where the image will be saved.
     """
-    ensure_dir(path)
+    ensure_dir(Path(path).parent)
+    parent = Path(path).parent
+    ensure_dir(str(parent))
     cv2.imwrite(path, image)
     return None
 

@@ -4,6 +4,7 @@ paths:
   interim_mosaic: data/interim/mosaic.jpg
   interim: data/interim
   processed: data/processed
+  processed_image: data/processed/processed_image.jpg
   results: experiments
 
 video:

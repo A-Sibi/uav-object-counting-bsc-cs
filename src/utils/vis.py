@@ -7,12 +7,13 @@ def draw_boxes(image, detections, color=(0, 255, 0), thickness=2):
     Draw bounding boxes on the image.
     
     :param image: Input image (numpy array).
-    :param detections: List of detections, each detection is a tuple (x1, y1, x2, y2).
+    :param detections: List of detections, each detection is a dict (x1, y1, x2, y2, conf).
     :param color: Color of the bounding box in BGR format.
     :param thickness: Thickness of the bounding box lines.
     :return: Image with drawn bounding boxes.
     """
-    for (x1, y1, x2, y2) in detections:
+    for d in detections:
+        x1, y1, x2, y2 = int(d['x1']), int(d['y1']), int(d['x2']), int(d['y2'])
         cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
     return image
 

@@ -4,8 +4,8 @@
 CONFIG   = configs/default.yaml
 WEIGHTS  = yolov8n.pt
 FRAMES   = data/raw/frames
-IMG      = data/raw/basic_test_parking_detection.png
-VIDEO    = data/raw/sample.mp4
+IMG      = data/raw/test_image3.jpg
+VIDEO    = data/raw/video1.mp4
 
 .PHONY: init run1 run2 detect stitch logs format clean
 
@@ -53,7 +53,7 @@ stitch:
 detect:
 	poetry run python -m src.cli \
 		--mode detect \
-		--test_image $(IMG) \
+		--image $(IMG) \
 		--config $(CONFIG)
 
 
