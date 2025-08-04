@@ -1,11 +1,13 @@
 .vscode
+testing.ipynb
 **/__pycache__/
 data/interim/
 data/processed/
 
-# ignore YOLOv8 weights
+# ignore model weights
 yolov8n.pt
 *.pt
+rb_vehicle.pth
 
 # large files
 *.mp4

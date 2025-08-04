@@ -23,7 +23,7 @@ def ensure_dir(path: str):
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def load_image(image_path: str) -> np.ndarray:
+def load_np_image(image_path: str) -> np.ndarray:
     """
     Load an image from the specified path using OpenCV.
     

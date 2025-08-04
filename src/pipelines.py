@@ -5,7 +5,7 @@ import cv2
 from src.utils.io import *
 from src.utils.vis import *
 from src.stitching.mosaic import build_mosaic
-from src.detection.detector import detect_cars
+from src.detection.detector import *
 
 def run_extract(video_path: str, cfg: dict[str, any]) -> None:
     """
@@ -45,17 +45,11 @@ def run_single_image_detect(image_path: str, cfg: dict[str, any]) -> None:
     Run object detection on a single image or mosaic and print the results.
     """
     print("Running Detection Pipeline on: ", image_path)
-    
-    detect_cfg = cfg.get("detect", {}).copy()
 
+    # detections = detect_cars_YOLO(image_path, detect_cfg)
+    detections = detect_cars_rb_vehicle(image_path, cfg)
 
-    image = load_image(image_path)
-
-    detections = detect_cars(image, detect_cfg)
-
-    print("Detections: ", detections)
-
-    image_with_boxes =  draw_boxes(image.copy(), detections)
+    image_with_boxes =  draw_rich_boxes(load_np_image(image_path), detections)
 
 
     # Print results

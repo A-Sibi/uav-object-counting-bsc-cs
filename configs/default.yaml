@@ -21,5 +21,5 @@ stitch:               # do a research on this
 
 detect:
   model: yolov8n.pt
-  conf: 0.4
+  conf: 0.5
   iou: 0.5
