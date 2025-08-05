@@ -61,4 +61,4 @@ format:
 	poetry run black src
 
 clean:
-	rm -rf data/interim/* data/processed/* experiments/*
+	rm -rf data/interim/* data/processed/*

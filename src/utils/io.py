@@ -31,6 +31,7 @@ def load_np_image(image_path: str) -> np.ndarray:
     :return: Loaded image as a numpy array.
     """
 
+    image_path = Path(image_path)
     if not image_path.exists():
         raise FileNotFoundError(f"Input image not found: {image_path}")
     image = cv2.imread(str(image_path))

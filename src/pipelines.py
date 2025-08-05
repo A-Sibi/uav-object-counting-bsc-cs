@@ -67,17 +67,29 @@ def run_single_image_detect(image_path: str, cfg: dict[str, any]) -> None:
 
 def run_pipeline1(video_path, cfg: dict[str, any]) -> None:
     print("Running Pipeline 1...")
+    print(f"Processing video: {video_path}")
+
     # 1. Extract frames
     frame_paths = extract_frames(
         video_path,
         cfg["paths"]["interim_frames"],
         cfg["video"]["frame_step"]
     )
-    frames = [cv2.imread(fp) for fp in frame_paths]
     # 2. Stitch frames into a mosaic
+    images_dir = cfg["paths"]["interim_frames"]
+    mosaic, H_list = build_mosaic(images_dir, cfg)
+    save_np_image(mosaic, cfg["paths"]["interim_mosaic"])
+
     # 3. Detect cars in the mosaic
+    image_path = cfg["paths"]["interim_mosaic"]
+    detections = detect_cars_rb_vehicle(image_path, cfg)
+    image_with_boxes =  draw_rich_boxes(load_np_image(image_path), detections)
+
     # 4. Save results
-    raise NotImplementedError("Pipeline 1 is not implemented yet.")
+    save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
+    print(f"Annotated image saved to '{cfg['paths']['processed_image']}'")
+    print("Pipeline 1 completed successfully.")
+    return None
 
 
 def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
