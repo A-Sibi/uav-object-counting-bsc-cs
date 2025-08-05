@@ -26,6 +26,9 @@ importlib-metadata = "^8.7.0"
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.30.0"
 
+[tool.poetry.scripts]
+uav-counter = "src.cli:main"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

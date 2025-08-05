@@ -1,9 +1,8 @@
 paths:
-  raw: data/raw
+  raw_video: data/raw/video.mp4
+  raw_image: data/raw/image.jpg
   interim_frames: data/interim/frames
   interim_mosaic: data/interim/mosaic.jpg
-  interim: data/interim
-  processed: data/processed
   processed_image: data/processed/processed_image.jpg
   results: experiments
 
