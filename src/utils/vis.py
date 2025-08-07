@@ -1,8 +1,9 @@
 # src/utils/vis.py
 import cv2
+import numpy as np
+from src.detection.detector import Detection, TranslatedDetection
 
-
-def draw_boxes(image, detections, color=(0, 255, 0), thickness=2):
+def draw_boxes(image: np.ndarray, detections: list[Detection], color=(0, 255, 0), thickness=2) -> np.ndarray:
     """
     Draw bounding boxes on the image.
     
@@ -17,7 +18,7 @@ def draw_boxes(image, detections, color=(0, 255, 0), thickness=2):
         cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
     return image
 
-def draw_rich_boxes(image, detections, color=(0, 255, 0), thickness=2):
+def draw_rich_boxes(image: np.ndarray, detections: list[Detection], color=(0, 255, 0), thickness=2) -> np.ndarray:
     """
     Draw bounding boxes with confidence on the image.
     
@@ -35,7 +36,7 @@ def draw_rich_boxes(image, detections, color=(0, 255, 0), thickness=2):
     return image
 
 
-def plot_points_on_mosaic(mosaic, points, color=(0, 0, 255), radius=5):
+def plot_points_on_mosaic(mosaic: np.ndarray, points: list[tuple], color=(0, 0, 255), radius=5) -> np.ndarray:
     """
     Plot points on the mosaic image.
     
@@ -50,7 +51,7 @@ def plot_points_on_mosaic(mosaic, points, color=(0, 0, 255), radius=5):
     return mosaic
 
 
-def show_image(image, title="Image"):
+def show_image(image: np.ndarray, title="Image") -> None:
     """
     Display an image using OpenCV.
     

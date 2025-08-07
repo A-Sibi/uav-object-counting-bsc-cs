@@ -1,8 +1,13 @@
-from pathlib import Path
+# src/stitching/mosaic.py
 import cv2
+import time
 import numpy as np
+from pathlib import Path
 
-def build_mosaic(images_dir: str, cfg: dict):
+from src.utils.geometry import compute_homography
+
+
+def build_mosaic(images_dir: str, cfg: dict, include_homography: bool = False) -> tuple[np.ndarray, list]:
     """
     Build a stitched mosaic from a directory of images, with optional resizing,
     chunked stitching, and stitching mode selection based on configuration.
@@ -17,6 +22,9 @@ def build_mosaic(images_dir: str, cfg: dict):
         mosaic (np.ndarray): Stitched panorama image (BGR).
         H_list (List[np.ndarray]): Identity homography matrices for each input image.
     """
+    # Start timing
+    start_time = time.perf_counter()
+
     img_paths = sorted(Path(images_dir).glob("*.jpg"))
     if not img_paths:
         raise FileNotFoundError(f"No images found in {images_dir}")
@@ -58,43 +66,46 @@ def build_mosaic(images_dir: str, cfg: dict):
     else:
         mosaic = partials[0]
 
-    # Placeholder homographies for pipeline 2 mapping
-    H_list = [np.eye(3, dtype=np.float64) for _ in img_paths]
+    # End timing
+    end_time = time.perf_counter()
+    elapsed = end_time - start_time
+    print(f"[INFO] build_mosaic: stitched {len(images)} images in {elapsed:.2f} seconds.")
+
+    H_list: list[np.ndarray] = []
+    if include_homography:
+        # 1) compute partial → mosaic for each chunk
+        H_pm: list[np.ndarray] = []
+        for p_idx, partial in enumerate(partials):
+            try:
+                H_p2m = compute_homography(
+                    partial, mosaic,
+                    feature=cfg['stitch'].get('feature', 'ORB'),
+                    reproj_thresh=cfg['stitch'].get('reproj_thresh', 4.0)
+                )
+            except Exception as e:
+                print(f"Error computing homography for partial {p_idx}: {e}")
+                H_p2m = np.eye(3, dtype=np.float64)
+            H_pm.append(H_p2m)
+
+        # 2) for each original frame, find frame → partial and chain
+        for chunk_idx, start in enumerate(range(0, len(images), chunk_size)):
+            end = min(start + chunk_size, len(images))
+            batch = images[start:end]
+            for i, frame in enumerate(batch):
+                frame_idx = start + i
+                try:
+                    H_f2p = compute_homography(
+                        frame, partials[chunk_idx],
+                        feature=cfg['stitch'].get('feature', 'ORB'),
+                        reproj_thresh=cfg['stitch'].get('reproj_thresh', 4.0)
+                    )
+                    # chain: frame → mosaic = (partial→mosaic) ∘ (frame→partial)
+                    H = H_pm[chunk_idx] @ H_f2p
+                except Exception as e:
+                    print(f"Error computing homography for frame {frame_idx}: {e}")
+                    H = np.eye(3, dtype=np.float64)
+                H_list.append(H)
+
     return mosaic, H_list
 
 
-def _build_mosaic(images_dir, cfg):
-    """
-    Build a stitched mosaic from a directory of images.
-
-    Args:
-        images_dir (str): Path to folder containing frame images (e.g. JPEGs).
-        cfg (dict): Configuration mapping, expects keys:
-            cfg['stitch']['feature']       # e.g., 'ORB', 'SIFT'
-            cfg['stitch']['reproj_thresh'] # e.g., 4.0
-
-    Returns:
-        mosaic (np.ndarray): The stitched panorama image (BGR).
-        H_list (List[np.ndarray]): Homography matrices (3x3) for each input image.
-    """
-    
-    # 1. Collect and load images
-    img_paths = sorted(Path(images_dir).glob("*.jpg"))
-    if not img_paths:
-        raise FileNotFoundError(f"No images found in {images_dir}")
-
-    images = [cv2.imread(str(p)) for p in img_paths]
-    if any(im is None for im in images):
-        raise RuntimeError("Failed to read one or more images for stitching.")
-
-    # 2. Use OpenCV's high-level Stitcher
-    stitcher = cv2.Stitcher_create(cv2.Stitcher_PANORAMA)
-    # Optionally tune internal parameters via detailed API in future
-    status, mosaic = stitcher.stitch(images)
-    if status != cv2.Stitcher_OK:
-        raise RuntimeError(f"Stitching failed (status code: {status})")
-
-    # 3. Placeholder homographies (identities) – for pipeline2 mapping later
-    H_list = [np.eye(3, dtype=np.float64) for _ in images]
-
-    return mosaic, H_list

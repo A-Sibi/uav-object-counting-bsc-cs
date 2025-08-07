@@ -5,6 +5,7 @@ import cv2
 from src.utils.io import *
 from src.utils.vis import *
 from src.stitching.mosaic import build_mosaic
+from src.mapping.project import project_detections
 from src.detection.detector import *
 
 def run_extract(video_path: str, cfg: dict[str, any]) -> None:
@@ -33,8 +34,7 @@ def run_stitch(images_dir: Path, cfg) -> None:
 
     print("Running Stitching Pipeline...")
     print(f"Stitching images in: {images_dir}")
-    mosaic, H_list = build_mosaic(images_dir, cfg)
-    print(f"Mosaic built with {len(H_list)} images.")
+    mosaic, _ = build_mosaic(images_dir, cfg)
     save_np_image(mosaic, cfg["paths"]["interim_mosaic"])
     print(f"Mosaic saved to {cfg['paths']['interim_mosaic']}")
     return None
@@ -95,11 +95,31 @@ def run_pipeline1(video_path, cfg: dict[str, any]) -> None:
 def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     print("Running Pipeline 2...")
     # 1. Extract frames
+    frame_paths = extract_frames(
+        video_path,
+        cfg["paths"]["interim_frames"],
+        cfg["video"]["frame_step"]
+    )
     # 2. Detect cars in each frame
+    frame_detections = []
+    for frame_path in frame_paths:
+        detections = detect_cars_rb_vehicle(frame_path, cfg)
+        frame_detections.append(detections)
+
     # 3. Stitch frames into a mosaic
+    images_dir = cfg["paths"]["interim_frames"]
+    mosaic, H_list = build_mosaic(images_dir, cfg, True)
+    save_np_image(mosaic, cfg["paths"]["interim_mosaic"])
+    
     # 4. Map detections to the mosaic
+    projected_detections = project_detections(frame_detections, H_list)
+    image_with_boxes = draw_rich_boxes(mosaic, projected_detections)
+
     # 5. Save results
-    raise NotImplementedError("Pipeline 2 is not implemented yet.")
+    save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
+    print(f"Annotated image saved to '{cfg['paths']['processed_image']}'")
+    print("Pipeline 2 completed successfully.")
+    return None
 
 
 def save_data() -> None:
