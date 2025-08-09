@@ -97,7 +97,7 @@ def detect_cars_YOLO(image_path: str, cfg: dict) -> List[Detection]:
 
     return detections
 
-
+_RBV_MODEL = None  # Global variable to cache the model
 def detect_cars_rb_vehicle(image_path: str, cfg: dict) -> List[Detection]:
     """
     Run RB vehicle detection (rebotnix/rb_vehicle)
@@ -113,10 +113,17 @@ def detect_cars_rb_vehicle(image_path: str, cfg: dict) -> List[Detection]:
             - x1, y1, x2, y2: bounding box coordinates (float)
             - conf: confidence score (float)
     """
-
-    model_path= "./rb_vehicle.pth"
+    global _RBV_MODEL
     CLASS_NAMES = ["vehicle"]
-    model = RFDETRBase(pretrain_weights=model_path,num_classes=len(CLASS_NAMES))
+    if _RBV_MODEL is None:
+        model_path = "./rb_vehicle.pth"
+        _RBV_MODEL = RFDETRBase(pretrain_weights=model_path, num_classes=len(CLASS_NAMES), class_names=CLASS_NAMES)
+        if hasattr(_RBV_MODEL, "optimize_for_inference"):
+            _RBV_MODEL.optimize_for_inference()
+        # optionally: _RBV_MODEL.eval()
+
+    model = _RBV_MODEL
+    model_path= "./rb_vehicle.pth"
 
     image = Image.open(image_path)
 

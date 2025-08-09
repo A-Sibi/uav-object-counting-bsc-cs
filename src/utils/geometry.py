@@ -2,8 +2,47 @@
 import cv2
 import numpy as np
 
+def compute_homography(img1, img2, feature='SIFT', reproj_thresh=3.0, ratio=0.7, min_inliers=10):
+    if feature == 'ORB':
+        detector = cv2.ORB_create(nfeatures=4000)  # more features
+        norm = cv2.NORM_HAMMING
+    elif feature == 'SIFT':
+        detector = cv2.SIFT_create(nfeatures=4000)
+        norm = cv2.NORM_L2
+    else:
+        raise ValueError(f"Unsupported feature type: {feature}")
 
-def compute_homography(img1, img2, feature='ORB', reproj_thresh=4.0) -> np.ndarray:
+    k1, d1 = detector.detectAndCompute(img1, None)
+    k2, d2 = detector.detectAndCompute(img2, None)
+
+    if d1 is None or d2 is None:
+        raise RuntimeError("No descriptors")
+
+    matcher = cv2.BFMatcher(norm)
+    raw = matcher.knnMatch(d1, d2, k=2)
+
+    good = []
+    for m, n in raw:
+        if m.distance < ratio * n.distance:
+            good.append(m)
+    if len(good) < 4:
+        raise RuntimeError("Not enough matches")
+
+    src = np.float32([k1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
+    dst = np.float32([k2[m.trainIdx].pt  for m in good]).reshape(-1, 1, 2)
+
+    H, mask = cv2.findHomography(src, dst, cv2.RANSAC, reproj_thresh, maxIters=5000, confidence=0.995)
+    if H is None:
+        raise RuntimeError("findHomography failed")
+
+    inliers = int(mask.sum()) if mask is not None else 0
+    if inliers < min_inliers:
+        raise RuntimeError(f"Too few inliers: {inliers}")
+
+    return H
+
+
+def _compute_homography(img1, img2, feature='ORB', reproj_thresh=4.0) -> np.ndarray:
     """
     Compute the homography matrix between two images using feature matching.
 

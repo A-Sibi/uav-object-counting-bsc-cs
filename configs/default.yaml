@@ -2,23 +2,30 @@ paths:
   raw_video: data/raw/video.mp4
   raw_image: data/raw/image.jpg
   interim_frames: data/interim/frames
+  interim_partials: data/interim/partials
+  interim_detections: data/interim/detections
+  interim_detections_batch: data/interim/detections_batch
   interim_mosaic: data/interim/mosaic.jpg
+  interim_homographies: data/interim/homography
   processed_image: data/processed/processed_image.jpg
   results: experiments
 
 video:
-  frame_step: 60       # take every 60th frame
+  frame_step: 30       # take every 30th frame
 
 stitch:               # do a research on this
   feature: ORB
   reproj_thresh: 4.0
-  resize_factor: 0.2
+  resize_factor: 1
   chunk_size: 5
   timeout: 300
-  mode: PANORAMA
+  mode: SCANS
 
 
 detect:
   model: yolov8n.pt
   conf: 0.5
   iou: 0.5
+
+# mode scans is better for 2d, but for some reason, final stitching on panorama is better?
+# mode panorama + chunk_size 5 + frame_step 60 gave best results but one weird partial

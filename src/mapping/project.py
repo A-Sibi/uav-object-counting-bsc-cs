@@ -3,7 +3,49 @@ from typing import List, TypedDict
 import numpy as np
 from src.detection.detector import Detection, TranslatedDetection
 
-def project_detections(dets_per_frame: List[Detection], H_list: List[np.ndarray]) -> List[TranslatedDetection]:
+def project_detections(dets_per_frame, H_list, mosaic_shape=None):
+    projected = []
+    H, W = (mosaic_shape[:2] if mosaic_shape is not None else (None, None))
+
+    for i, dets in enumerate(dets_per_frame):
+        Hf = H_list[i]
+        if Hf is None:  # skip frames whose H failed
+            continue
+        for d in dets:
+            x1_b, y1_b, x2_b, y2_b = d['x1'], d['y1'], d['x2'], d['y2']
+            corners = np.array([[x1_b, y1_b, 1.0],
+                                [x2_b, y1_b, 1.0],
+                                [x2_b, y2_b, 1.0],
+                                [x1_b, y2_b, 1.0]], dtype=float)
+
+            mapped = (Hf @ corners.T).T
+            w = mapped[:, 2:3]
+            if not np.all(np.isfinite(mapped)) or np.any(np.abs(w) < 1e-6):
+                continue  # numerical trash
+
+            mapped_xy = mapped[:, :2] / w
+            xs, ys = mapped_xy[:, 0], mapped_xy[:, 1]
+            xm1, ym1 = float(xs.min()), float(ys.min())
+            xm2, ym2 = float(xs.max()), float(ys.max())
+
+            # sanity (clamp + size check)
+            if W is not None:
+                xm1, xm2 = np.clip([xm1, xm2], 0, W-1)
+                ym1, ym2 = np.clip([ym1, ym2], 0, H-1)
+            if (xm2 - xm1) < 3 or (ym2 - ym1) < 3:
+                continue  # too tiny
+            if W is not None and ((xm2 - xm1) > W * 0.5 or (ym2 - ym1) > H * 0.5):
+                continue  # blown up
+
+            projected.append({
+                'x1': xm1, 'y1': ym1, 'x2': xm2, 'y2': ym2,
+                'conf': d.get('conf', 1.0), 'frame_idx': i,
+                'x1_b': x1_b, 'y1_b': y1_b, 'x2_b': x2_b, 'y2_b': y2_b
+            })
+    return projected
+
+
+def _project_detections(dets_per_frame: List[Detection], H_list: List[np.ndarray]) -> List[TranslatedDetection]:
     """
     Apply homography transformation to a list of detections.
 
