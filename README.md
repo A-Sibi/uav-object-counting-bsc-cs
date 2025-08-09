@@ -17,8 +17,9 @@ Each approach has its pros and cons in terms of accuracy, complexity, and robust
 
 ## Command Reference
 
-All commands accept the global option:
-    -c, --config PATH     Path to YAML config (default: configs/default.yaml)
+All commands accept the global option: `-c, --config PATH`
+
+* Path to YAML config (default: *configs/default.yaml*)
 
 ---
 
