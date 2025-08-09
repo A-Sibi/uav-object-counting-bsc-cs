@@ -88,18 +88,18 @@ def main():
         help="For given frames, partials and detections on frames, compute homographies, map saved detections, and save mosaic"
     )
     pbm.add_argument(
-        "images_dir",
-        nargs="?",
-        default=None,
-        type=Path,
-        help="Directory of frames (default from config)"
-    )
-    pbm.add_argument(
         "dets_dir",
         nargs="?",
         default=None,
         type=Path,
         help="Directory of saved detections (default from config)"
+    )
+    pbm.add_argument(
+        "homographies_dir",
+        nargs="?",
+        default=None,
+        type=Path,
+        help="Directory of homographies (default from config)"
     )
 
 
@@ -119,6 +119,8 @@ def main():
         args.images_dir = Path(cfg["paths"]["interim_frames"])
     if hasattr(args, 'dets_dir') and args.dets_dir is None:
         args.dets_dir = Path(cfg["paths"]["interim_detections"])
+    if hasattr(args, 'homographies_dir') and args.homographies_dir is None:
+        args.homographies_dir = Path(cfg["paths"]["interim_homographies"])
 
     if args.command == 'run1':
         run_pipeline1(args.video, cfg)
@@ -133,7 +135,7 @@ def main():
     elif args.command == 'batch_detect':
         run_batch_detect(args.images_dir, cfg)
     elif args.command == 'batch_map':
-        run_batch_map(args.images_dir, args.dets_dir, cfg)
+        run_batch_map(args.dets_dir, args.homographies_dir, cfg)
     elif args.command == 'save_data':
         save_data()
     else:

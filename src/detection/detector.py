@@ -4,6 +4,7 @@ import numpy as np
 from ultralytics import YOLO
 from PIL import Image
 from rfdetr import RFDETRBase
+import os
 
 
 class Detection(TypedDict):
@@ -117,6 +118,8 @@ def detect_cars_rb_vehicle(image_path: str, cfg: dict) -> List[Detection]:
     CLASS_NAMES = ["vehicle"]
     if _RBV_MODEL is None:
         model_path = "./rb_vehicle.pth"
+        if not os.path.exists(model_path):  
+            raise FileNotFoundError(f"Model file not found: {model_path}")
         _RBV_MODEL = RFDETRBase(pretrain_weights=model_path, num_classes=len(CLASS_NAMES), class_names=CLASS_NAMES)
         if hasattr(_RBV_MODEL, "optimize_for_inference"):
             _RBV_MODEL.optimize_for_inference()
