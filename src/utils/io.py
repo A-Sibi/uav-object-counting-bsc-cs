@@ -6,6 +6,7 @@ import numpy as np
 import yaml
 from pathlib import Path
 import cv2
+import time
 
 def load_config(path: str) -> dict:
     """
@@ -56,18 +57,25 @@ def save_np_image(image: np.ndarray, path: str) -> None:
     return None
 
 
-def extract_frames(video_path: str, out_dir: str, step: int = 5) -> list[str]:
+def extract_frames(video_path: str, out_dir: str, step: int = 5) -> None:
     """
     Extract every `step`-th frame from the video and save it as JPEG in `out_dir`.
     Returns a list of saved image paths.
     """
+
+    start_time = time.perf_counter()
+
     ensure_dir(out_dir)
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video: {video_path}")
 
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     saved = []
     idx = 0
+    extracted_count = 0
+
+    print(f"[INFO] Extracting from: {video_path}, total frames: {total_frames}, using step={step}")
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -76,10 +84,20 @@ def extract_frames(video_path: str, out_dir: str, step: int = 5) -> list[str]:
             out_path = Path(out_dir) / f"frame_{idx:05d}.jpg"
             cv2.imwrite(str(out_path), frame)
             saved.append(str(out_path))
+            extracted_count += 1
+
+            # Print progress every 20th extracted frame
+            if extracted_count % 20 == 0:
+                print(f"[INFO] Extracted {extracted_count}/{total_frames // step} frames")
         idx += 1
 
     cap.release()
-    return saved
+
+    elapsed_time = time.perf_counter() - start_time
+    minutes = int(elapsed_time // 60)
+    seconds = int(elapsed_time % 60)
+    print(f"[INFO] Extracted {len(saved)} frames to {out_dir} in {minutes}m {seconds}s.")
+    return None
 
 
 def save_homographies_json(H_list, img_paths, out_dir, meta=None, filename=None):

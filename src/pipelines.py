@@ -18,13 +18,12 @@ def run_extract(video_path: str, cfg: dict[str, any]) -> None:
     """
 
     print("Running Frame Extraction Pipeline...")
-    print(f"Extracting frames from video: {video_path}")
     extract_frames(
         video_path,
         cfg["paths"]["interim_frames"],
         cfg["video"]["frame_step"]
     )
-    print(f"Frames extracted to: {cfg['paths']['interim_frames']}")
+    print("Frame extraction pipeline completed.")
     return None
 
 
@@ -36,10 +35,9 @@ def run_stitch(images_dir: Path, cfg, compute_homographies: bool) -> None:
     """
 
     print("Running Stitching Pipeline...")
-    print(f"Stitching images in: {images_dir}")
     mosaic, _ = build_mosaic(images_dir, cfg, compute_homographies)
     save_np_image(mosaic, cfg["paths"]["interim_mosaic"])
-    print(f"Mosaic saved to {cfg['paths']['interim_mosaic']}")
+    print("Stitching pipeline completed.")
     return None
 
 
@@ -86,15 +84,19 @@ def run_batch_detect(images_dir: str, cfg: dict[str, any]) -> None:
         print(f"No images found in {images_dir}")
         return
 
-    for image_path in image_paths:
+    for idx, image_path in enumerate(image_paths):
         dets = detect_cars_rb_vehicle(str(image_path), cfg)
         image_with_boxes = draw_rich_boxes(load_np_image(str(image_path)), dets)
         save_np_image(image_with_boxes, batch_dets_dir / f"{image_path.stem}_annotated.jpg")
 
-        out_path = dets_dir / f"{image_path.stem}_detections.json"
+        out_path = dets_dir / f"{image_path.stem}.json"
         clean = [{k: float(v) for k,v in d.items()} for d in dets]
         with open(out_path, 'w') as f:
             json.dump(clean, f, indent=2)
+
+        if idx % 10 == 0:
+            print(f"[INFO] detection: processed {idx + 1}/{len(image_paths)} images")
+        
     print(f"Detections saved in: {out_path}")
     print("Batch detection completed.")
     return None
@@ -115,16 +117,15 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any]) -> No
     cfg: dict
         Configuration dictionary containing paths and parameters.
     """
-    print("Running Batch Map Pipeline...")
 
     # 1. Load mosaic
     mosaic = load_np_image(cfg["paths"]["interim_mosaic"])
-    print(f"Loaded mosaic from: {cfg['paths']['interim_mosaic']}")
 
+    print(f"Running Batch Map Pipeline for detections in {dets_dir} on mosaic '{cfg['paths']['interim_mosaic']}'")
     # 2. Load homographies
     h_json = latest_json_file(homography_dir)
     H_list, images_order, meta = load_homographies_json(h_json)
-    print(f"Loaded {len(H_list)} homographies from: {h_json}")
+    print(f"[INFO] Loaded {len(H_list)} homographies from: {h_json}")
 
     # 3) Load all detections into a mapping by stem
     dets_dir = Path(dets_dir)
@@ -153,25 +154,26 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any]) -> No
         print(f"[WARN] No detection file for {len(missing)} frames. Examples: {missing[:5]}")
 
     # 5) Project detections onto the mosaic
-    projected_detections = project_detections(dets_per_frame, H_list)
+    projected_detections = project_detections(dets_per_frame, H_list, mosaic_shape=mosaic.shape[:2])
     print(f"[INFO] Projected {len(projected_detections)} boxes onto mosaic.")
 
     # 6) (Optional) merge duplicates here later (DBSCAN / distance NMS)
 
     # 7) Draw and save the results
-    image_with_boxes = draw_rich_boxes(mosaic, projected_detections)
+    resize_factor = cfg.get("stitch", {}).get("resize_factor", 1.0)
+    image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
     save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
     print(f"Annotated mosaic saved to '{cfg['paths']['processed_image']}'")
+    print("Batch mapping completed.")
     
     return None
 
 
 def run_pipeline1(video_path, cfg: dict[str, any]) -> None:
     print("Running Pipeline 1...")
-    print(f"Processing video: {video_path}")
 
     # 1. Extract frames
-    frame_paths = extract_frames(
+    extract_frames(
         video_path,
         cfg["paths"]["interim_frames"],
         cfg["video"]["frame_step"]
@@ -200,7 +202,7 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     frames_dir.mkdir(parents=True, exist_ok=True)
     if not any(frames_dir.iterdir()):
         print(f"Extracting frames from video: {video_path}")
-        frame_paths = extract_frames(
+        extract_frames(
             video_path,
             cfg["paths"]["interim_frames"],
             cfg["video"]["frame_step"]
@@ -222,12 +224,6 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     mosaic, H_list = build_mosaic(images_dir, cfg, True)
     save_np_image(mosaic, cfg["paths"]["interim_mosaic"])
 
-    s = cfg.get('stitch', {}).get('resize_factor', 1.0)
-    if s != 1.0:
-        S = np.array([[s, 0, 0],
-                    [0, s, 0],
-                    [0, 0, 1]], dtype=np.float64)
-        H_list = [H @ S for H in H_list]
     
     # 4. Map detections to the mosaic
     projected_detections = project_detections(frame_detections, H_list, mosaic_shape=mosaic.shape[:2])

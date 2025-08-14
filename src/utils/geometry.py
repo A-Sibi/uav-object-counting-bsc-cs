@@ -31,7 +31,7 @@ def compute_homography(img1, img2, feature='SIFT', reproj_thresh=3.0, ratio=0.7,
     src = np.float32([k1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
     dst = np.float32([k2[m.trainIdx].pt  for m in good]).reshape(-1, 1, 2)
 
-    H, mask = cv2.findHomography(src, dst, cv2.RANSAC, reproj_thresh, maxIters=5000, confidence=0.995)
+    H, mask = cv2.findHomography(src, dst, cv2.USAC_MAGSAC, reproj_thresh, maxIters=10000, confidence=0.999)
     if H is None:
         raise RuntimeError("findHomography failed")
 

@@ -16,7 +16,7 @@ video:
 stitch:               # do a research on this
   feature: ORB
   reproj_thresh: 4.0
-  resize_factor: 1
+  resize_factor: 0.5
   chunk_size: 5
   timeout: 300
   mode: SCANS

@@ -18,6 +18,7 @@ def draw_boxes(image: np.ndarray, detections: list[Detection], color=(0, 255, 0)
         cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
     return image
 
+
 def draw_rich_boxes(image: np.ndarray, detections: list[Detection], color=(0, 255, 0), thickness=2) -> np.ndarray:
     """
     Draw bounding boxes with confidence on the image.
@@ -33,6 +34,24 @@ def draw_rich_boxes(image: np.ndarray, detections: list[Detection], color=(0, 25
         conf = d.get('conf', 0.0)
         cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
         cv2.putText(image, f"#{i}: {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    return image
+
+
+def draw_translated_boxes(image: np.ndarray, detections: list[TranslatedDetection], color=(0, 255, 0), thickness=1, ) -> np.ndarray:
+    """
+    Draw translated bounding boxes on the image.
+    
+    :param image: Input image (numpy array).
+    :param detections: List of translated detections, each detection is a dict (x1, y1, x2, y2, conf, translation).
+    :param color: Color of the bounding box in BGR format.
+    :param thickness: Thickness of the bounding box lines.
+    :return: Image with drawn translated bounding boxes.
+    """
+
+    for d in detections:
+        x1, y1, x2, y2 = int(d['x1']), int(d['y1']), int(d['x2']), int(d['y2'])
+        cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
+        cv2.putText(image, f"F: {d['frame_idx']}, conf: {d['conf']:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.2, color, 1)
     return image
 
 
