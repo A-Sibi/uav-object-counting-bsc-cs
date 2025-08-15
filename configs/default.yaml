@@ -21,11 +21,27 @@ stitch:               # do a research on this
   timeout: 300
   mode: SCANS
 
+homography: # currently not connected to the stitcher
+  method: RANSAC
+  ransac_reproj_thresh: 4.0
+  ransac_confidence: 0.99
+  min_inliers: 10
 
 detect:
-  model: yolov8n.pt
+  model: rb_vehicle # TODO: detection model picker
   conf: 0.5
   iou: 0.5
+  YOLO:
+    model: yolov8n.pt
+
+postprocess:
+  conf_min: 0.25
+  size_low_q: 0.1
+  size_high_q: 0.95
+  prox_factor: 0.45
+  iou_merge: 0.5
+  texture_min: 40
+  min_support_frames: 4
 
 # mode scans is better for 2d, but for some reason, final stitching on panorama is better?
 # mode panorama + chunk_size 5 + frame_step 60 gave best results but one weird partial

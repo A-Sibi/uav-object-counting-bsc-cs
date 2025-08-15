@@ -120,6 +120,8 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any], filte
         Configuration dictionary containing paths and parameters.
     """
 
+    total_start = time.perf_counter()
+
     # 1. Load mosaic
     mosaic = load_np_image(cfg["paths"]["interim_mosaic"])
 
@@ -157,17 +159,24 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any], filte
 
     # 5) Project detections onto the mosaic
     projected_detections = project_detections(dets_per_frame, H_list, mosaic_shape=mosaic.shape[:2])
-    print(f"[INFO] Projected {len(projected_detections)} boxes onto mosaic.")
+    print(f"[INFO] Projected {len(projected_detections)} detections to new coordinates.")
 
     # 6) (Optional) merge duplicates here later (DBSCAN / distance NMS)
     if filter:
-        print("[INFO] Running filter on projected detections...")
+        print("Running filter on projected detections...")
         projected_detections = clean_projected_detections(mosaic, projected_detections, cfg)
         ...
 
     # 7) Draw and save the results
     image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
     save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
+
+    # Timer for the entire pipeline
+    total_elapsed = time.perf_counter() - total_start
+    total_minutes = int(total_elapsed // 60)
+    total_seconds = int(total_elapsed % 60)
+    print(f"[TIMER] Batch map: total time {total_minutes:02d}:{total_seconds:02d}s ")
+
     print(f"Detected {len(projected_detections)} cars in the mosaic.")
     print(f"Annotated mosaic saved to '{cfg['paths']['processed_image']}'")
     print("Batch mapping completed.")

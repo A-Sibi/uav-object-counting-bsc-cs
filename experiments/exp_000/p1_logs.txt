@@ -1,0 +1,5 @@
+[TIMER] Extracted 119 frames to data\interim\frames in 2m 5s.
+[TIMER] build_mosaic: stitched 119 images in 01:06s
+[INFO] build_mosaic: skipping homography computation
+[TIMER] Pipeline 1: total time 03:39s
+Detected 23 cars in the mosaic.
