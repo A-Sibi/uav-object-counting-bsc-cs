@@ -1,5 +1,6 @@
 # src/detection/detector.py
 from typing import List, TypedDict, Dict
+import uuid
 import numpy as np
 from ultralytics import YOLO
 from PIL import Image
@@ -7,12 +8,14 @@ from rfdetr import RFDETRBase
 import os
 
 
-class Detection(TypedDict):
+class Detection:
     """
     Single detection with bounding box coordinates (xyxy) and confidence score.
 
     Attributes
     ----------
+    id : str
+        Unique identifier for the detection.
     x1 : float
         Left x-coordinate of the bounding box.
     y1 : float
@@ -24,6 +27,7 @@ class Detection(TypedDict):
     conf : float
         Confidence score of the detection (0.0-1.0).
     """
+    id: str
     x1: float
     y1: float
     x2: float
@@ -53,6 +57,23 @@ class TranslatedDetection(Detection):
     x2_b: float
     y2_b: float
 
+
+class DetectionIDCounter:
+    """
+    Simple counter to generate unique IDs for detections.
+    """
+    def __init__(self):
+        self._counter = 0
+
+    def next_id(self) -> int:
+        """
+        Generate a new unique ID.
+        """
+        self._counter += 1
+        return self._counter
+
+# Global counter instance
+detection_id_counter = DetectionIDCounter()
 
 def detect_cars_YOLO(image_path: str, cfg: dict) -> List[Detection]:
     """
@@ -89,6 +110,7 @@ def detect_cars_YOLO(image_path: str, cfg: dict) -> List[Detection]:
         # Filter for cars only
         if cls == car_cls:
             detections.append({
+                "id": detection_id_counter.next_id(),  # Generate a unique ID for each detection
                 "x1": float(x1),
                 "y1": float(y1),
                 "x2": float(x2),
@@ -134,14 +156,15 @@ def detect_cars_rb_vehicle(image_path: str, cfg: dict) -> List[Detection]:
 
     def to_dicts(result, conf_threshold=0.0):
       xyxy = getattr(result, "xyxy")
-      confs = getattr(result, "confidence")  # or result.conf if that’s what your wrapper uses
+      confs = getattr(result, "confidence")
       return [
           {
-              "x1": float(x1),
-              "y1": float(y1),
-              "x2": float(x2),
-              "y2": float(y2),
-              "conf": float(conf),
+            "id": detection_id_counter.next_id(),  # Generate a unique ID for each detection
+            "x1": float(x1),
+            "y1": float(y1),
+            "x2": float(x2),
+            "y2": float(y2),
+            "conf": float(conf),
           }
           for (x1, y1, x2, y2), conf in zip(xyxy, confs)
           if conf >= conf_threshold

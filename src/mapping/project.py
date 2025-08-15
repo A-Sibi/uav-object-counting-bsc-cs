@@ -40,7 +40,8 @@ def project_detections(dets_per_frame, H_list, mosaic_shape=None):
             projected.append({
                 'x1': xm1, 'y1': ym1, 'x2': xm2, 'y2': ym2,
                 'conf': d.get('conf', 1.0), 'frame_idx': i,
-                'x1_b': x1_b, 'y1_b': y1_b, 'x2_b': x2_b, 'y2_b': y2_b
+                'x1_b': x1_b, 'y1_b': y1_b, 'x2_b': x2_b, 'y2_b': y2_b,
+                'id': int(d['id'])
             })
     return projected
 

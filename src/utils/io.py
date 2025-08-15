@@ -174,6 +174,7 @@ def coerce_dets_schema(data) -> list[dict]:
         if not all(k in d for k in ("x1", "y1", "x2", "y2")):
             continue
         dd = {
+            "id": int(d["id"]) if "id" in d else -1,  # Default ID if not present
             "x1": float(d["x1"]),
             "y1": float(d["y1"]),
             "x2": float(d["x2"]),

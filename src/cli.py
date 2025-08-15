@@ -101,6 +101,11 @@ def main():
         type=Path,
         help="Directory of homographies (default from config)"
     )
+    pbm.add_argument(
+        "-f", "--filter",
+        action="store_true",
+        help="Apply duplicate-removal filter on projected detections"
+    )
 
 
     # save_data
@@ -135,7 +140,7 @@ def main():
     elif args.command == 'batch_detect':
         run_batch_detect(args.images_dir, cfg)
     elif args.command == 'batch_map':
-        run_batch_map(args.dets_dir, args.homographies_dir, cfg)
+        run_batch_map(args.dets_dir, args.homographies_dir, cfg, args.filter)
     elif args.command == 'save_data':
         save_data()
     else:

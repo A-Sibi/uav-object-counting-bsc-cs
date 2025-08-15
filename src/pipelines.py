@@ -3,7 +3,9 @@ import json
 from pathlib import Path
 import cv2
 import torch
+import time
 
+from src.detection.postprocess import clean_projected_detections
 from src.utils.io import *
 from src.utils.vis import *
 from src.stitching.mosaic import build_mosaic
@@ -102,7 +104,7 @@ def run_batch_detect(images_dir: str, cfg: dict[str, any]) -> None:
     return None
 
 
-def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any]) -> None:
+def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any], filter=False) -> None:
     """
     Run batch mapping of frame detections to a mosaic.
 
@@ -158,11 +160,15 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any]) -> No
     print(f"[INFO] Projected {len(projected_detections)} boxes onto mosaic.")
 
     # 6) (Optional) merge duplicates here later (DBSCAN / distance NMS)
+    if filter:
+        print("[INFO] Running filter on projected detections...")
+        projected_detections = clean_projected_detections(mosaic, projected_detections, cfg)
+        ...
 
     # 7) Draw and save the results
-    resize_factor = cfg.get("stitch", {}).get("resize_factor", 1.0)
     image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
     save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
+    print(f"Detected {len(projected_detections)} cars in the mosaic.")
     print(f"Annotated mosaic saved to '{cfg['paths']['processed_image']}'")
     print("Batch mapping completed.")
     
@@ -171,6 +177,8 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any]) -> No
 
 def run_pipeline1(video_path, cfg: dict[str, any]) -> None:
     print("Running Pipeline 1...")
+
+    total_start = time.perf_counter()
 
     # 1. Extract frames
     extract_frames(
@@ -191,12 +199,24 @@ def run_pipeline1(video_path, cfg: dict[str, any]) -> None:
     # 4. Save results
     save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
     print(f"Annotated image saved to '{cfg['paths']['processed_image']}'")
+
+    # Timer for the entire pipeline
+    total_elapsed = time.perf_counter() - total_start
+    total_minutes = int(total_elapsed // 60)
+    total_seconds = int(total_elapsed % 60)
+    print(f"[TIMER] Pipeline 1: total time {total_minutes:02d}:{total_seconds:02d}s ")
+
+    print(f"Detected {len(detections)} cars in the mosaic.")
     print("Pipeline 1 completed successfully.")
     return None
 
 
 def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     print("Running Pipeline 2...")
+
+    total_start = time.perf_counter()
+
+
     # 1. Extract frames (only if not already done)
     frames_dir = Path(cfg["paths"]["interim_frames"])
     frames_dir.mkdir(parents=True, exist_ok=True)
@@ -215,9 +235,13 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     # 2. Detect cars in each frame
     frame_detections = []
     with torch.no_grad():
-        for frame_path in frame_paths:
+        for i, frame_path in enumerate(frame_paths, start=1):
             detections = detect_cars_rb_vehicle(frame_path, cfg)
             frame_detections.append(detections)
+
+            if i % 10 == 0:
+                print(f"[INFO] detection: processed {i + 1}/{len(frame_paths)} images")
+
 
     # 3. Stitch frames into a mosaic
     images_dir = cfg["paths"]["interim_frames"]
@@ -227,11 +251,23 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     
     # 4. Map detections to the mosaic
     projected_detections = project_detections(frame_detections, H_list, mosaic_shape=mosaic.shape[:2])
-    image_with_boxes = draw_rich_boxes(mosaic, projected_detections)
+
+    # remove excessive detections
+    projected_detections = clean_projected_detections(mosaic, projected_detections)
+    image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
 
     # 5. Save results
     save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
     print(f"Annotated image saved to '{cfg['paths']['processed_image']}'")
+
+    
+    # Timer for the entire pipeline
+    total_elapsed = time.perf_counter() - total_start
+    total_minutes = int(total_elapsed // 60)
+    total_seconds = int(total_elapsed % 60)
+    print(f"[TIMER] Pipeline 2: total time {total_minutes:02d}:{total_seconds:02d}s ")
+
+    print(f"Detected {len(projected_detections)} cars in the mosaic.")
     print("Pipeline 2 completed successfully.")
     return None
 
