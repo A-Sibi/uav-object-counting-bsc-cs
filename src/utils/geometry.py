@@ -2,15 +2,71 @@
 import cv2
 import numpy as np
 
-def compute_homography(img1, img2, feature='SIFT', reproj_thresh=3.0, ratio=0.7, min_inliers=10):
+
+def _resolve_method_flag(method: str) -> int:
+    m = method.upper()
+    if m == "RANSAC":
+        return cv2.RANSAC
+    if m == "LMEDS":
+        return cv2.LMEDS
+    # USAC variants (OpenCV >= 4.5)
+    if hasattr(cv2, m):
+        return getattr(cv2, m)
+    raise ValueError(f"Unsupported method: {method}")
+
+
+def compute_homography(img1, img2, cfg: dict[str: any]) -> np.ndarray:
+    """
+    Compute a homography mapping points from img1 -> img2 using config-driven
+    feature matching and robust estimation.
+
+    Expected YAML (cfg['homography']):
+    homography:
+      feature: SIFT            # SIFT | ORB
+      nfeatures: 4000          # detector feature budget
+      matcher: AUTO            # AUTO | BF | FLANN
+      ratio: 0.7               # Lowe's ratio threshold (0..1)
+      method: USAC_MAGSAC      # RANSAC | LMEDS | USAC_MAGSAC | USAC_FAST | USAC_ACCURATE
+      reproj_thresh: 3.0       # px threshold for RANSAC/USAC
+      confidence: 0.999        # estimator confidence
+      max_iters: 10000         # estimator iterations
+      min_inliers: 10          # reject H if inliers below this
+
+    Returns:
+      H (3x3 float64): homography mapping img1 coords -> img2 coords
+    Raises:
+      RuntimeError/ValueError when matching or estimation fails.
+    """
+
+    # Extracting config parameters
+    hcfg = cfg.get("homography", {})
+    f = hcfg["feature"]; m = hcfg["match"]; e = hcfg["estimate"]
+
+    feature = str(f.get("type", "SIFT")).upper()
+    nfeatures = int(f.get("nfeatures", 4000))
+    matcher = str(m.get("strategy", "AUTO")).upper()
+    knn_k = int(m.get("knn_k", 2))
+    if knn_k < 2:
+        # Lowe's ratio needs at least two neighbors; force to 2
+        knn_k = 2
+    ratio = float(m.get("ratio", 0.7))
+    method = str(e.get("method", "USAC_MAGSAC"))
+    reproj_thresh = float(e.get("reproj_thresh", 4.0))
+    confidence = float(e.get("confidence", 0.999))
+    max_iters = int(e.get("max_iters", 10000))
+    min_inliers = int(e.get("min_inliers", 10))
+
+    # --- Detector & descriptor norm
     if feature == 'ORB':
-        detector = cv2.ORB_create(nfeatures=4000)  # more features
+        detector = cv2.ORB_create(nfeatures=nfeatures)  # more features
         norm = cv2.NORM_HAMMING
     elif feature == 'SIFT':
-        detector = cv2.SIFT_create(nfeatures=4000)
+        detector = cv2.SIFT_create(nfeatures=nfeatures)
         norm = cv2.NORM_L2
     else:
         raise ValueError(f"Unsupported feature type: {feature}")
+
+    # Converting images to grayscale for robust feature finding?
 
     k1, d1 = detector.detectAndCompute(img1, None)
     k2, d2 = detector.detectAndCompute(img2, None)
@@ -18,8 +74,30 @@ def compute_homography(img1, img2, feature='SIFT', reproj_thresh=3.0, ratio=0.7,
     if d1 is None or d2 is None:
         raise RuntimeError("No descriptors")
 
-    matcher = cv2.BFMatcher(norm)
-    raw = matcher.knnMatch(d1, d2, k=2)
+    # --- Matcher selection
+    use_flann = False
+    if matcher == "AUTO":
+        if feature == "ORB":
+            bf = cv2.BFMatcher(norm)
+        else:  # SIFT -> FLANN
+            index_params = dict(algorithm=1, trees=5)  # KDTree
+            search_params = dict(checks=64)
+            flann = cv2.FlannBasedMatcher(index_params, search_params)
+            use_flann = True
+    elif matcher == "BF":
+        bf = cv2.BFMatcher(norm)
+    elif matcher == "FLANN":
+        if norm != cv2.NORM_L2:
+            raise ValueError("FLANN requires L2/float descriptors (e.g., SIFT)")
+        index_params = dict(algorithm=1, trees=5)
+        search_params = dict(checks=64)
+        flann = cv2.FlannBasedMatcher(index_params, search_params)
+        use_flann = True
+    else:
+        raise ValueError(f"Unsupported matcher: {matcher}")
+
+    # --- KNN + Lowe's ratio
+    raw = (flann.knnMatch(d1, d2, k=knn_k) if use_flann else bf.knnMatch(d1, d2, k=knn_k))
 
     good = []
     for m, n in raw:
@@ -31,7 +109,17 @@ def compute_homography(img1, img2, feature='SIFT', reproj_thresh=3.0, ratio=0.7,
     src = np.float32([k1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
     dst = np.float32([k2[m.trainIdx].pt  for m in good]).reshape(-1, 1, 2)
 
-    H, mask = cv2.findHomography(src, dst, cv2.USAC_MAGSAC, reproj_thresh, maxIters=10000, confidence=0.999)
+    # --- Robust estimator
+    method_flag = _resolve_method_flag(method)
+    if method_flag in (cv2.RANSAC, getattr(cv2, "USAC_MAGSAC", -1), getattr(cv2, "USAC_FAST", -1), getattr(cv2, "USAC_ACCURATE", -1)):
+        H, mask = cv2.findHomography(src, dst, method_flag, reproj_thresh, maxIters=max_iters, confidence=confidence)
+    elif method_flag == cv2.LMEDS:
+        H, mask = cv2.findHomography(src, dst, method_flag)
+    else:
+        # Fallback (should not happen with supported flags)
+        H, mask = cv2.findHomography(src, dst, method_flag, reproj_thresh)   
+
+
     if H is None:
         raise RuntimeError("findHomography failed")
 
@@ -39,73 +127,6 @@ def compute_homography(img1, img2, feature='SIFT', reproj_thresh=3.0, ratio=0.7,
     if inliers < min_inliers:
         raise RuntimeError(f"Too few inliers: {inliers}")
 
-    return H
-
-
-def _compute_homography(img1, img2, feature='ORB', reproj_thresh=4.0) -> np.ndarray:
-    """
-    Compute the homography matrix between two images using feature matching.
-
-    Parameters
-    ----------
-    img1 : ndarray
-        Starting image.
-    img2 : ndarray
-        Image to project coordinates onto.
-    feature : {'ORB', 'SIFT'}, optional
-        Feature detection method, by default 'ORB'.
-    reproj_thresh : float, optional
-        RANSAC reprojection threshold, by default 4.0.
-
-    Returns
-    -------
-    ndarray
-        3x3 homography matrix.
-
-    Raises
-    ------
-    ValueError
-        If an unsupported feature type is provided.
-    RuntimeError
-        If not enough matches are found for homography estimation.
-    """
-    # 1. Create detector
-    if feature == 'ORB':
-        detector = cv2.ORB_create()
-    elif feature == 'SIFT':
-        detector = cv2.SIFT_create()
-    else:
-        raise ValueError(f"Unsupported feature type: {feature}")
-
-    # 2. Detect & compute
-    kpts1, desc1 = detector.detectAndCompute(img1, None)
-    kpts2, desc2 = detector.detectAndCompute(img2, None)
-
-    # 3. Match descriptors
-    if feature == 'ORB':
-        matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
-    else:
-        matcher = cv2.BFMatcher(cv2.NORM_L2)  # for SIFT (L2)
-
-    raw_matches = matcher.knnMatch(desc1, desc2, k=2)
-
-    # 4. Filter with Lowe’s ratio test
-    good = []
-    ratio = 0.75
-    for m,n in raw_matches:
-        if m.distance < ratio * n.distance:
-            good.append(m)
-
-    # 5. Build point arrays
-    if len(good) < 4:
-        raise RuntimeError("Not enough matches for homography")
-    src_pts = np.float32([kpts1[m.queryIdx].pt for m in good]).reshape(-1,1,2)
-    dst_pts = np.float32([kpts2[m.trainIdx].pt for m in good]).reshape(-1,1,2)
-
-    # 6. Estimate H
-    H, mask = cv2.findHomography(src_pts, dst_pts,
-                                 cv2.RANSAC,
-                                 reproj_thresh)
     return H
 
 

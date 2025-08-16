@@ -12,3 +12,6 @@ mode panorama + chunk_size 5 + frame_step 60 gave best results but one weird par
 # Pipeline 2
 
 In p2 all detections, 4 horizontally oriented detections in the middle of the bottom right quadrant that seem out of place are actually good detections, since a car was moving through that area at that time.
+
+
+* targeted false positive parking house with conf>=0.78

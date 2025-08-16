@@ -16,29 +16,37 @@ video:
   frame_step: 30       # take every 30th frame
 
 detect:
-  model: rb_vehicle # {rb_vehicle, YOLO}
-  conf: 0.5 # detector confidence treshold
+  model: rb_vehicle     # {rb_vehicle, YOLO}
+  conf: 0.5             # detector confidence treshold
   iou: 0.5
   YOLO:
     weight: yolov8n.pt
 
-stitch:               # do a research on this
-  feature: ORB
-  reproj_thresh: 4.0
-  resize_factor: 0.5
-  chunk_size: 5
+stitch: # do a research on this
   mode: SCANS
+  chunk_size: 5
+  resize_factor: 0.5
 
-homography: # currently not connected to the stitcher
-  method: RANSAC
-  ransac_reproj_thresh: 4.0
-  ransac_confidence: 0.99
-  min_inliers: 10
+homography:
+  compute: direct        # direct | chain
+  feature:               # --- keypoint/descriptor extraction ---
+    type: ORB            # ORB | SIFT
+    nfeatures: 4000
+  match:                 # --- descriptor matching + ratio test ---
+    strategy: AUTO       # AUTO | BF | FLANN  (AUTO: BF+Hamming for ORB, FLANN for SIFT)
+    knn_k: 2             # 2 for Lowe's ratio test
+    ratio: 0.7           # Lowe's ratio threshold (lower = stricter)
+  estimate:              # --- robust H estimation ---
+    method: USAC_MAGSAC  # RANSAC | LMEDS | USAC_MAGSAC | USAC_ACCURATE | USAC_FAST
+    reproj_thresh: 4.0   # px
+    confidence: 0.999
+    max_iters: 10000
+    min_inliers: 10      # reject H if too few inliers
 
 postprocess:
   confidence:
     run: true
-    conf_min: 0.6
+    conf_min: 0.78
 
   size_quantiles:
     run: true

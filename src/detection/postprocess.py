@@ -6,7 +6,7 @@ import cv2
 from typing import Dict, List
 from src.detection.types import Detection
 
-# ---------- small helpers ----------
+# ---------- small filter helpers ----------
 
 def _box_to_arr(d: Detection) -> np.ndarray:
     return np.array([d['x1'], d['y1'], d['x2'], d['y2']], dtype=float)
@@ -74,12 +74,32 @@ def _edge_frac_auto(gray_u8):
     edges = cv2.Canny(gray_u8, lo, hi)
     return float((edges > 0).mean())   # 0..1
 
+# popular choice for some reason, should check in more detail.
+def _nms(dets, iou_thresh=0.5):
+    if not dets: return []
+    boxes = np.array([_box_to_arr(d) for d in dets])
+    scores = np.array([d.get('conf', 0.0) for d in dets])
+    order = scores.argsort()[::-1]
+    keep = []
+    x1,y1,x2,y2 = boxes.T
+    areas = (x2-x1)*(y2-y1)
+    while order.size:
+        i = order[0]; keep.append(i)
+        xx1 = np.maximum(x1[i], x1[order[1:]])
+        yy1 = np.maximum(y1[i], y1[order[1:]])
+        xx2 = np.minimum(x2[i], x2[order[1:]])
+        yy2 = np.minimum(y2[i], y2[order[1:]])
+        inter = np.maximum(0, xx2-xx1)*np.maximum(0, yy2-yy1)
+        iou = inter / np.maximum(areas[i] + areas[order[1:]] - inter, 1e-9)
+        order = order[np.where(iou <= iou_thresh)[0] + 1]
+    return [dets[i] for i in keep]
+
+# ---------- process helpers ----------
+
 def _should_run(block: Dict[str, any] | None, default: bool = True) -> bool:
     """Return True/False depending on block['run'], with safe defaults."""
     return bool((block or {}).get("run", default))
 
-
-# ---------- log helper ----------
 
 def _log(stage: str, count: int, extra: str = ""):
     """Aligned logging for cleaner stages."""
