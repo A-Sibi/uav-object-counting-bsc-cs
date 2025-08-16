@@ -1,7 +1,7 @@
 # src/mapping/project.py
 from typing import List, TypedDict
 import numpy as np
-from src.detection.detector import Detection, TranslatedDetection
+from src.detection.types import Detection, TranslatedDetection
 
 def project_detections(dets_per_frame, H_list, mosaic_shape=None):
     projected = []

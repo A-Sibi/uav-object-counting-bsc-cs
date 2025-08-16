@@ -4,13 +4,14 @@ from pathlib import Path
 import cv2
 import torch
 import time
+import shutil
 
 from src.detection.postprocess import clean_projected_detections
 from src.utils.io import *
 from src.utils.vis import *
 from src.stitching.mosaic import build_mosaic
 from src.mapping.project import project_detections
-from src.detection.detector import *
+from src.detection import detect
 
 def run_extract(video_path: str, cfg: dict[str, any]) -> None:
     """
@@ -50,7 +51,7 @@ def run_single_image_detect(image_path: str, cfg: dict[str, any]) -> None:
     print("Running Detection Pipeline on: ", image_path)
 
     # detections = detect_cars_YOLO(image_path, detect_cfg)
-    detections = detect_cars_rb_vehicle(image_path, cfg)
+    detections = detect(image_path, cfg)
 
     image_with_boxes =  draw_rich_boxes(load_np_image(image_path), detections)
 
@@ -87,7 +88,7 @@ def run_batch_detect(images_dir: str, cfg: dict[str, any]) -> None:
         return
 
     for idx, image_path in enumerate(image_paths):
-        dets = detect_cars_rb_vehicle(str(image_path), cfg)
+        dets = detect(str(image_path), cfg)
         image_with_boxes = draw_rich_boxes(load_np_image(str(image_path)), dets)
         save_np_image(image_with_boxes, batch_dets_dir / f"{image_path.stem}_annotated.jpg")
 
@@ -202,12 +203,12 @@ def run_pipeline1(video_path, cfg: dict[str, any]) -> None:
 
     # 3. Detect cars in the mosaic
     image_path = cfg["paths"]["interim_mosaic"]
-    detections = detect_cars_rb_vehicle(image_path, cfg)
+    detections = detect(image_path, cfg)
     image_with_boxes =  draw_rich_boxes(load_np_image(image_path), detections)
 
     # 4. Save results
-    save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
-    print(f"Annotated image saved to '{cfg['paths']['processed_image']}'")
+    save_np_image(image_with_boxes, cfg["paths"]["p1_result"])
+    print(f"Annotated image saved to '{cfg['paths']['p1_result']}'")
 
     # Timer for the entire pipeline
     total_elapsed = time.perf_counter() - total_start
@@ -245,7 +246,7 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     frame_detections = []
     with torch.no_grad():
         for i, frame_path in enumerate(frame_paths, start=1):
-            detections = detect_cars_rb_vehicle(frame_path, cfg)
+            detections = detect(frame_path, cfg)
             frame_detections.append(detections)
 
             if i % 10 == 0:
@@ -262,7 +263,7 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     projected_detections = project_detections(frame_detections, H_list, mosaic_shape=mosaic.shape[:2])
 
     # remove excessive detections
-    projected_detections = clean_projected_detections(mosaic, projected_detections)
+    projected_detections = clean_projected_detections(mosaic, projected_detections, cfg)
     image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
 
     # 5. Save results
@@ -287,3 +288,26 @@ def save_data() -> None:
     """
 
     raise NotImplementedError("Data saving is not implemented yet.")
+
+
+def run_clear(cfg: dict, keep_interim=False, keep_processed=False) -> None:
+    """
+    Clear the interim and processed data directories unless flagged to keep.
+    """
+    print("Clearing data...")
+    interim_dir = Path("data/interim")
+    processed_dir = Path("data/processed")
+
+    if not keep_interim and interim_dir.exists():
+        shutil.rmtree(interim_dir, ignore_errors=True)
+        print("[INFO] Removed data/interim")
+    else:
+        print("[INFO] Kept data/interim")
+
+    if not keep_processed and processed_dir.exists():
+        shutil.rmtree(processed_dir)
+        print("[INFO] Removed data/processed")
+    else:
+        print("[INFO] Kept data/processed")
+
+    print("Clear command finished.")

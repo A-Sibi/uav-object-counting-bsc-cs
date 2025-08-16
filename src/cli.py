@@ -107,6 +107,19 @@ def main():
         help="Apply duplicate-removal filter on projected detections"
     )
 
+    # clear intermediate/processed data
+    pclr = subparsers.add_parser("clear", help="Clear data/interim and data/processed folders")
+    pclr.add_argument(
+        "-i", "--keep-interim",
+        action="store_true",
+        help="Keep data/interim folder (do not delete)"
+    )
+    pclr.add_argument(
+        "-p", "--keep-processed",
+        action="store_true",
+        help="Keep data/processed folder (do not delete)"
+    )
+
 
     # save_data
     psd = subparsers.add_parser("save_data", help="Archive current processed data into experiments/")
@@ -143,6 +156,8 @@ def main():
         run_batch_map(args.dets_dir, args.homographies_dir, cfg, args.filter)
     elif args.command == 'save_data':
         save_data()
+    elif args.command == 'clear':
+        run_clear(cfg, keep_interim=args.keep_interim, keep_processed=args.keep_processed)
     else:
         parser.print_help()
         sys.exit(1)

@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import cv2
 from typing import Dict, List
-from src.detection.detector import Detection
+from src.detection.types import Detection
 
 # ---------- small helpers ----------
 

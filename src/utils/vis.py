@@ -1,7 +1,7 @@
 # src/utils/vis.py
 import cv2
 import numpy as np
-from src.detection.detector import Detection, TranslatedDetection
+from src.detection.types import Detection, TranslatedDetection
 
 def draw_boxes(image: np.ndarray, detections: list[Detection], color=(0, 255, 0), thickness=2) -> np.ndarray:
     """

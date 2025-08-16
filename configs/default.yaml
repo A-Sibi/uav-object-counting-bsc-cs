@@ -9,10 +9,18 @@ paths:
   interim_mosaic: data/interim/mosaic.jpg
   interim_homographies: data/interim/homography
   processed_image: data/processed/processed_image.jpg
-  results: experiments
+  p1_result: data/processed/p1_result.jpg
+  p2_result: data/processed/p2_result.jpg
 
 video:
   frame_step: 30       # take every 30th frame
+
+detect:
+  model: rb_vehicle # {rb_vehicle, YOLO}
+  conf: 0.5 # detector confidence treshold
+  iou: 0.5
+  YOLO:
+    weight: yolov8n.pt
 
 stitch:               # do a research on this
   feature: ORB
@@ -26,13 +34,6 @@ homography: # currently not connected to the stitcher
   ransac_reproj_thresh: 4.0
   ransac_confidence: 0.99
   min_inliers: 10
-
-detect:
-  model: rb_vehicle # TODO: detection model picker
-  conf: 0.5 # detector confidence treshold
-  iou: 0.5
-  YOLO:
-    model: yolov8n.pt
 
 postprocess:
   confidence:
