@@ -1,3 +1,4 @@
+# configs/default.yaml
 paths:
   raw_video: data/raw/video.mp4
   raw_image: data/raw/image.jpg
@@ -18,7 +19,6 @@ stitch:               # do a research on this
   reproj_thresh: 4.0
   resize_factor: 0.5
   chunk_size: 5
-  timeout: 300
   mode: SCANS
 
 homography: # currently not connected to the stitcher
@@ -29,19 +29,34 @@ homography: # currently not connected to the stitcher
 
 detect:
   model: rb_vehicle # TODO: detection model picker
-  conf: 0.5
+  conf: 0.5 # detector confidence treshold
   iou: 0.5
   YOLO:
     model: yolov8n.pt
 
 postprocess:
-  conf_min: 0.25
-  size_low_q: 0.1
-  size_high_q: 0.95
-  prox_factor: 0.45
-  iou_merge: 0.5
-  texture_min: 40
-  min_support_frames: 4
+  confidence:
+    run: true
+    conf_min: 0.6
 
-# mode scans is better for 2d, but for some reason, final stitching on panorama is better?
-# mode panorama + chunk_size 5 + frame_step 60 gave best results but one weird partial
+  size_quantiles:
+    run: true
+    size_low_q: 0.1
+    size_high_q: 0.95
+
+  proximity_clustering:
+    run: true
+    prox_factor: 0.45
+    iou_merge: 0.5
+
+  support:
+    run: true
+    min_support_frames: 4
+    min_support_members: 6
+
+  texture_rejection:
+    run: true
+    texture_min: 40
+    inner_shrink: 0.10
+    empty_std_max: 15
+    empty_edge_max: 0.02
