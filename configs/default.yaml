@@ -8,12 +8,14 @@ paths:
   interim_detections_batch: data/interim/detections_batch
   interim_mosaic: data/interim/mosaic.jpg
   interim_homographies: data/interim/homography
-  interim_pairs: data/interim/pairs.txt
   processed_image: data/processed/processed_image.jpg
   processed_detections: data/processed/final_detections.json
+  gt_image: data/raw/gt_image.jpg
+  gt_raw_annotations: data/interim/gt_raw_annotations.json
+  gt_annotations: data/processed/gt_detections.json
   p1_result: data/processed/p1_result.jpg
   p2_result: data/processed/p2_result.jpg
-  gt_annotations: data/interim/manual_gt_detections.json
+  interim_pairs: experiments/pairs.txt
 
 video:
   frame_step: 30       # take every 30th frame

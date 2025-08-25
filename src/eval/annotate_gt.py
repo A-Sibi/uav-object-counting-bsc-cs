@@ -2,7 +2,7 @@ from __future__ import annotations
 import json, os
 import cv2
 
-def annotate_mosaic(mosaic_path: str, out_json: str, display_max=(1920, 1080)) -> str:
+def annotate_image(mosaic_path: str, out_json: str, display_max=(1920, 1080)) -> str:
     """
     Two-click annotator with live preview.
     LMB 1st click = anchor; move mouse to size; LMB 2nd click = finalize box

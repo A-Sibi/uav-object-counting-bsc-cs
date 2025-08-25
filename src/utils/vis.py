@@ -56,7 +56,7 @@ def draw_translated_boxes(image: np.ndarray, detections: list[TranslatedDetectio
     return image
 
 
-def draw_gt_pred_boxes(
+def draw_overlay_boxes(
     image: np.ndarray,
     gt_boxes: list[Detection],
     pred_boxes: list[Detection],

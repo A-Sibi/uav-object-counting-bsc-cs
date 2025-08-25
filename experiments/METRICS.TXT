@@ -1,0 +1,6 @@
+data/processed/final_detections.json vs data/processed/gt_detections.json: TP=22 FP=3 FN=1 | P=0.880 R=0.957 F1=0.917 | AP@0.50=0.897 | #pred=25 #gt=23 diff=2 rel_err=8.70%
+
+== AVERAGE over all ==
+macro: P=0.880 R=0.957 F1=0.917 AP@0.50=0.897
+counts: #pred(avg)=25.00 #gt(avg)=23.00 diff(avg)=2.00 rel_err(avg)=8.70%
+micro:  P=0.880 R=0.957 F1=0.917  |  #pred=25 #gt=23 diff=2 rel_err=8.70%

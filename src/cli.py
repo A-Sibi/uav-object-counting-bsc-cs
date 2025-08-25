@@ -120,7 +120,11 @@ def main():
         help="Keep data/processed folder (do not delete)"
     )
 
-    peval_ann = subparsers.add_parser("annotate", help="Ročno označi GT škatle na mozaiku -> JSON")
+    # annotate
+    peval_ann = subparsers.add_parser(
+        "annotate",
+        help="Annotate GT boxes. Default: annotate GT image and auto-warp to mosaic. Use -m to annotate mosaic directly."
+    )
     peval_ann.add_argument(
         "mosaic",
         nargs="?",
@@ -129,10 +133,15 @@ def main():
         help="Path to mosaic (default: cfg.paths.interim_mosaic)"
     )
     peval_ann.add_argument(
-        "-o", "--out",
+        "-m", "--on-mosaic",
+        action="store_true",
+        help="Annotate directly on the mosaic (no homography)."
+    )
+    peval_ann.add_argument(
+        "--gt-image",
         type=Path,
         default=None,
-        help="Izhodni GT JSON (privzeto: <cfg.paths.results|experiments>/gt_YYYYmmdd_HHMMSS.json)"
+        help="Path to the GT image to click on (used when not --on-mosaic). Defaults to cfg.paths.gt_image."
     )
 
     peval_ap = subparsers.add_parser("eval", help="Izračun P/R/F1 in AP@IoU iz parov predikcij in GT")
@@ -174,6 +183,8 @@ def main():
         args.pairs = Path(cfg["paths"]["interim_pairs"])
     if hasattr(args, 'iou') and args.iou is None:
         args.iou = cfg["eval"]["iou"]
+    if hasattr(args, 'gt_image') and args.gt_image is None:
+        args.gt_image = Path(cfg["paths"].get("gt_image", "data/raw/gt_image.jpg"))
 
 
     if args.command == 'run1':
@@ -195,7 +206,12 @@ def main():
     elif args.command == 'clear':
         run_clear(cfg, keep_interim=args.keep_interim, keep_processed=args.keep_processed)
     elif args.command == "annotate":
-        run_annotate(args.mosaic, cfg)
+        run_annotate(
+            mosaic=args.mosaic,
+            cfg=cfg,
+            on_mosaic=args.on_mosaic,
+            gt_image=args.gt_image,
+        )
     elif args.command == "eval":
         run_eval(args.pairs, args.iou, cfg)
     else:

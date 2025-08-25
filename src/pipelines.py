@@ -7,8 +7,11 @@ import time
 import shutil
 
 from src.detection.postprocess import clean_projected_detections
-from src.eval.annotate_gt import annotate_mosaic
+from src.eval.annotate_gt import annotate_image
 from src.eval.eval_mosaic import evaluate_mosaic
+from src.eval.metrics import load_boxes, pr_curve_and_ap50
+from src.eval.plot import save_pr_curve
+from src.utils.geometry import compute_homography, warp_boxes
 from src.utils.io import *
 from src.utils.vis import *
 from src.stitching.mosaic import build_mosaic
@@ -317,14 +320,97 @@ def run_clear(cfg: dict, keep_interim=False, keep_processed=False) -> None:
 
     print("Clear command finished.")
 
-def run_annotate(mosaic, cfg):
-    out =  Path(cfg["paths"].get("gt_annotations", "data/interim/manual_gt_detections.json"))
-    saved = annotate_mosaic(str(mosaic), str(out))
-    print(f"[EVAL] GT saved → {saved}")
+def run_annotate(
+    mosaic: Path,
+    cfg: dict,
+    on_mosaic: bool = False,
+    gt_image: Path | None = None,
+    out_path: Path | None = None,
+) -> None:
+    """
+    - on_mosaic=False: annotate on GT image, auto-compute H=compute_homography(GT, mosaic, cfg), warp to mosaic coords.
+    - on_mosaic=True: annotate directly on mosaic (no homography).
+    Always writes final JSON in MOSAIC coordinates (what eval expects).
+    Also writes a raw JSON of the clicked boxes for traceability.
+    """
 
+    final_out = cfg["paths"].get("gt_annotations", "data/processed/gt_detections.json") if out_path is None else out_path
 
-def run_eval(pairs, iou, cfg):
+    if on_mosaic:
+        print("Annotating directly on the mosaic (no homography).")
+        # click on mosaic, save as-is (already in mosaic coords)
+        raw_json = cfg["paths"].get("gt_annotations", "data/processed/gt_detections.json")
+        saved = annotate_image(str(mosaic), str(raw_json))
+        with open(saved, "r", encoding="utf-8") as f_in, open(final_out, "w", encoding="utf-8") as f_out:
+            json.dump(json.load(f_in), f_out, indent=2)
+        print(f"[EVAL] GT saved → {final_out}")
+        return
 
-    print("Running evaluation...")
-    evaluate_mosaic(pairs, iou)
-    return None
+    print("Annotating on the GT image (warping to mosaic coords).")
+    # click on GT image
+    if gt_image is None:
+        raise RuntimeError("GT image not provided (use --gt-image or set cfg.paths.gt_image).")
+    raw_json = cfg["paths"].get("gt_raw_image", "data/interim/gt_raw_image.json")
+    saved_raw = annotate_image(str(gt_image), str(raw_json))
+    print(f"[EVAL] Raw GT (image coords) → {saved_raw}")
+
+    # auto-compute H (GT -> mosaic) using your function
+    gt_img = cv2.imread(str(gt_image))
+    mosaic_img = cv2.imread(str(mosaic))
+    if gt_img is None or mosaic_img is None:
+        raise FileNotFoundError("Could not read GT or mosaic image.")
+    H = compute_homography(gt_img, mosaic_img, cfg)  # <- your function
+
+    # warp boxes to mosaic coords and save
+    with open(saved_raw, "r", encoding="utf-8") as f:
+        boxes = json.load(f)
+    boxes_mosaic = warp_boxes(boxes, H)
+    with open(final_out, "w", encoding="utf-8") as f:
+        json.dump(boxes_mosaic, f, indent=2)
+    print(f"[EVAL] GT (warped to mosaic) saved → {final_out}")
+
+def run_eval(pairs: Path, iou: float | None, cfg: dict[str, any]) -> None:
+    """
+    Standardized wrapper: reads IoU from cfg if not provided, prints metrics via eval module,
+    and creates per-pair overlays on the current mosaic.
+    YAML:
+      eval:
+        iou: 0.5
+      paths:
+        results: experiments
+        interim_mosaic: data/interim/mosaic.jpg
+    """
+    iou_val = float(iou if iou is not None else (cfg.get("eval") or {}).get("iou", 0.5))
+    results_dir = "data/processed"
+
+    print(f"Running evaluation with IoU={iou_val:.2f} and pairs file: {pairs}")
+    # 1) metrics
+    _ = evaluate_mosaic(str(pairs), iou_val)  # prints detailed report
+
+    # === PR curves ===
+    pr_dir = Path(results_dir + "/" + "pr_curves")
+    pr_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with open(pairs, "r", encoding="utf-8") as f:
+            lines = [ln.strip() for ln in f if ln.strip()]
+        for idx, ln in enumerate(lines, start=1):
+            parts = [s.strip() for s in ln.split(";")]
+            pred_json, gt_json = parts[0], parts[1]
+            # preberi detekcije
+            preds = load_boxes(pred_json)
+            gts   = load_boxes(gt_json)
+            # izračun PR in AP@IoU (isti kot eval)
+            AP, precisions, recalls, best = pr_curve_and_ap50(preds, gts, iou_val)
+            # varnost: če seznami prazni, preskoči
+            if not recalls or not precisions:
+                print(f"[EVAL] PR skipped (no points) for line {idx}")
+                continue
+            # shranimo krivuljo
+            # optional meta: video/pipeline iz parsa (če imaš; tukaj ga lahko izluščiš kot pri overlay)
+            title = f"AP@{iou_val:.2f}={AP:.3f}"
+            out_path = pr_dir / f"pr_{idx:02d}.png"
+            saved = save_pr_curve(recalls, precisions, AP, best, str(out_path), title=title)
+            print(f"[EVAL] PR curve saved → {saved}")
+    except Exception as e:
+        print(f"[WARN] PR curve generation skipped: {e}")
