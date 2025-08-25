@@ -8,9 +8,12 @@ paths:
   interim_detections_batch: data/interim/detections_batch
   interim_mosaic: data/interim/mosaic.jpg
   interim_homographies: data/interim/homography
+  interim_pairs: data/interim/pairs.txt
   processed_image: data/processed/processed_image.jpg
+  processed_detections: data/processed/final_detections.json
   p1_result: data/processed/p1_result.jpg
   p2_result: data/processed/p2_result.jpg
+  gt_annotations: data/interim/manual_gt_detections.json
 
 video:
   frame_step: 30       # take every 30th frame
@@ -69,3 +72,6 @@ postprocess:
     inner_shrink: 0.10
     empty_std_max: 15
     empty_edge_max: 0.02
+
+eval:
+  iou: 0.5

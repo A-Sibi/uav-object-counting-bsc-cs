@@ -7,6 +7,8 @@ import time
 import shutil
 
 from src.detection.postprocess import clean_projected_detections
+from src.eval.annotate_gt import annotate_mosaic
+from src.eval.eval_mosaic import evaluate_mosaic
 from src.utils.io import *
 from src.utils.vis import *
 from src.stitching.mosaic import build_mosaic
@@ -169,6 +171,7 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any], filte
         ...
 
     # 7) Draw and save the results
+    save_detections_json(projected_detections, cfg["paths"]["processed_detections"])
     image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
     save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
 
@@ -207,6 +210,7 @@ def run_pipeline1(video_path, cfg: dict[str, any]) -> None:
     image_with_boxes =  draw_rich_boxes(load_np_image(image_path), detections)
 
     # 4. Save results
+    save_detections_json(detections, cfg["paths"]["processed_detections"])
     save_np_image(image_with_boxes, cfg["paths"]["p1_result"])
     print(f"Annotated image saved to '{cfg['paths']['p1_result']}'")
 
@@ -264,6 +268,7 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
 
     # remove excessive detections
     projected_detections = clean_projected_detections(mosaic, projected_detections, cfg)
+    save_detections_json(projected_detections, cfg["paths"]["processed_detections"])
     image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
 
     # 5. Save results
@@ -311,3 +316,15 @@ def run_clear(cfg: dict, keep_interim=False, keep_processed=False) -> None:
         print("[INFO] Kept data/processed")
 
     print("Clear command finished.")
+
+def run_annotate(mosaic, cfg):
+    out =  Path(cfg["paths"].get("gt_annotations", "data/interim/manual_gt_detections.json"))
+    saved = annotate_mosaic(str(mosaic), str(out))
+    print(f"[EVAL] GT saved → {saved}")
+
+
+def run_eval(pairs, iou, cfg):
+
+    print("Running evaluation...")
+    evaluate_mosaic(pairs, iou)
+    return None

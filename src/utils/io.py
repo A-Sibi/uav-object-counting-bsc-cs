@@ -7,6 +7,9 @@ import yaml
 from pathlib import Path
 import cv2
 import time
+from typing import List, Dict, Any, Union
+
+from src.detection.types import Detection
 
 def load_config(path: str) -> dict:
     """
@@ -183,3 +186,55 @@ def coerce_dets_schema(data) -> list[dict]:
         }
         clean.append(dd)
     return clean
+
+def _to_jsonable(x: Any) -> Any:
+    """Robusna konverzija vrednosti u JSON-kompatibilne tipove."""
+    if isinstance(x, (float, int, str, bool)) or x is None:
+        return x
+    if isinstance(x, np.floating):
+        return float(x)
+    if isinstance(x, np.integer):
+        return int(x)
+    if isinstance(x, np.ndarray):
+        return x.tolist()
+    # fallback – npr. UUID ili drugi objekti
+    return str(x)
+
+def save_detections_json(
+    detections: List[Detection],
+    out_path: Union[str, Path],
+    indent: int = 2,
+    sort_keys: bool = False,
+) -> str:
+    """
+    Sačuva listu detekcija u JSON fajl. Ostavlja *sva* postojeća polja iz dict-a.
+    Primer izlaza:
+    [
+      {"x1": 327.0, "y1": 1861.0, "x2": 676.0, "y2": 2203.0, "conf": 0.91, "frame_idx": 12, ...},
+      ...
+    ]
+    """
+    p = Path(out_path)
+    if p.suffix.lower() != ".json":
+        # dozvoli prosleđivanje direktorijuma – napravi podrazumevano ime
+        p.mkdir(parents=True, exist_ok=True)
+        import time
+        p = p / f"detections_{time.strftime('%Y%m%d_%H%M%S')}.json"
+    else:
+        p.parent.mkdir(parents=True, exist_ok=True)
+
+    rows: List[Dict[str, Any]] = []
+    for d in detections or []:
+        # zadrži sva polja i bezbedno ih konvertuj
+        rows.append({k: _to_jsonable(v) for k, v in dict(d).items()})
+
+    with open(p, "w", encoding="utf-8") as f:
+        json.dump(rows, f, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+
+    return str(p)
+
+
+# (opciono) simetrična funkcija za čitanje
+def load_detections_json(path: Union[str, Path]) -> List[Detection]:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)

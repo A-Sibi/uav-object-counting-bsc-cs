@@ -120,6 +120,35 @@ def main():
         help="Keep data/processed folder (do not delete)"
     )
 
+    peval_ann = subparsers.add_parser("annotate", help="Ročno označi GT škatle na mozaiku -> JSON")
+    peval_ann.add_argument(
+        "mosaic",
+        nargs="?",
+        default=None,
+        type=Path,
+        help="Path to mosaic (default: cfg.paths.interim_mosaic)"
+    )
+    peval_ann.add_argument(
+        "-o", "--out",
+        type=Path,
+        default=None,
+        help="Izhodni GT JSON (privzeto: <cfg.paths.results|experiments>/gt_YYYYmmdd_HHMMSS.json)"
+    )
+
+    peval_ap = subparsers.add_parser("eval", help="Izračun P/R/F1 in AP@IoU iz parov predikcij in GT")
+    peval_ap.add_argument(
+        "--pairs",
+        type=Path,
+        default=None,
+        help="TXT file: by rows 'pred.json;gt.json'"
+    )
+    peval_ap.add_argument(
+        "--iou",
+        type=float,
+        default=None,
+        help="IoU threshold (default 0.5 — 'AP@50')"
+    )
+
 
     # save_data
     psd = subparsers.add_parser("save_data", help="Archive current processed data into experiments/")
@@ -139,6 +168,13 @@ def main():
         args.dets_dir = Path(cfg["paths"]["interim_detections"])
     if hasattr(args, 'homographies_dir') and args.homographies_dir is None:
         args.homographies_dir = Path(cfg["paths"]["interim_homographies"])
+    if hasattr(args, 'mosaic') and args.mosaic is None:
+        args.mosaic = Path(cfg["paths"]["interim_mosaic"])
+    if hasattr(args, 'pairs') and args.pairs is None:
+        args.pairs = Path(cfg["paths"]["interim_pairs"])
+    if hasattr(args, 'iou') and args.iou is None:
+        args.iou = cfg["eval"]["iou"]
+
 
     if args.command == 'run1':
         run_pipeline1(args.video, cfg)
@@ -158,6 +194,10 @@ def main():
         save_data()
     elif args.command == 'clear':
         run_clear(cfg, keep_interim=args.keep_interim, keep_processed=args.keep_processed)
+    elif args.command == "annotate":
+        run_annotate(args.mosaic, cfg)
+    elif args.command == "eval":
+        run_eval(args.pairs, args.iou, cfg)
     else:
         parser.print_help()
         sys.exit(1)

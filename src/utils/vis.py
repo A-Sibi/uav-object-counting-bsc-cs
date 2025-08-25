@@ -56,6 +56,32 @@ def draw_translated_boxes(image: np.ndarray, detections: list[TranslatedDetectio
     return image
 
 
+def draw_gt_pred_boxes(
+    image: np.ndarray,
+    gt_boxes: list[Detection],
+    pred_boxes: list[Detection],
+    gt_color=(0, 0, 255),      # red
+    pred_color=(0, 255, 0),    # green
+    thickness: int = 2,
+) -> np.ndarray:
+    """
+    Draw GT (red) and prediction (green) boxes on the image, no labels.
+    Follows the style of existing drawers (cv2.rectangle only).
+
+    :param image: Input image (numpy array, BGR).
+    :param gt_boxes: List of GT detections (dicts with x1,y1,x2,y2).
+    :param pred_boxes: List of predicted detections (dicts with x1,y1,x2,y2[,conf]).
+    :param gt_color: BGR color for GT boxes.
+    :param pred_color: BGR color for prediction boxes.
+    :param thickness: Rectangle line thickness.
+    :return: Image with GT and prediction boxes drawn.
+    """
+    out = image.copy()
+    # GT first (red), then predictions (green) on top:
+    out = draw_boxes(out, gt_boxes, color=gt_color, thickness=thickness)
+    out = draw_boxes(out, pred_boxes, color=pred_color, thickness=thickness)
+    return out
+
 def plot_points_on_mosaic(mosaic: np.ndarray, points: list[tuple], color=(0, 0, 255), radius=5) -> np.ndarray:
     """
     Plot points on the mosaic image.
