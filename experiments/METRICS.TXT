@@ -4,3 +4,13 @@ data/processed/final_detections.json vs data/processed/gt_detections.json: TP=22
 macro: P=0.880 R=0.957 F1=0.917 AP@0.50=0.897
 counts: #pred(avg)=25.00 #gt(avg)=23.00 diff(avg)=2.00 rel_err(avg)=8.70%
 micro:  P=0.880 R=0.957 F1=0.917  |  #pred=25 #gt=23 diff=2 rel_err=8.70%
+
+---
+
+experiments/exp_000/p1_detections.json vs experiments/exp_000/gt_detections.json: TP=23 FP=0 FN=0 | P=1.000 R=1.000 F1=1.000 | AP@0.50=1.000 | #pred=23 #gt=23 diff=0 rel_err=0.00%
+experiments/exp_000/p2_detections.json vs experiments/exp_000/gt_detections.json: TP=22 FP=1 FN=1 | P=0.957 R=0.957 F1=0.957 | AP@0.50=0.992 | #pred=23 #gt=23 diff=0 rel_err=0.00%
+
+== AVERAGE over all ==
+macro: P=0.978 R=0.978 F1=0.978 AP@0.50=0.996
+counts: #pred(avg)=23.00 #gt(avg)=23.00 diff(avg)=0.00 rel_err(avg)=0.00%
+micro:  P=0.978 R=0.978 F1=0.978  |  #pred=46 #gt=46 diff=0 rel_err=0.00%

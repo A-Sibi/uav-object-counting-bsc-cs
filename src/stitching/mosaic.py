@@ -9,6 +9,15 @@ from src.utils.geometry import compute_homography
 from src.utils.io import ensure_dir, save_homographies_json
 
 
+def _iter_chunks(n: int, size: int, overlap: int):
+    i = 0
+    while i < n:
+        j = min(n, i + size)
+        yield i, j
+        if j == n: break
+        i = j - overlap  # step back for overlap
+
+
 def _stitch_batch(images: List[np.ndarray], mode: int) -> np.ndarray:
     """Stitch a batch of images with OpenCV high-level Stitcher."""
     stitcher = cv2.Stitcher_create(mode)
@@ -56,7 +65,6 @@ def build_mosaic(images_dir: str, cfg: dict, include_homography: bool = False) -
     stitch_mode = cv2.Stitcher_PANORAMA if mode_str == 'PANORAMA' else cv2.Stitcher_SCANS
     resize_factor = s_cfg.get('resize_factor', 1.0)
 
-
     # preparing paths
     img_paths = sorted(Path(images_dir).glob("*.jpg"))
     if not img_paths:
@@ -78,7 +86,8 @@ def build_mosaic(images_dir: str, cfg: dict, include_homography: bool = False) -
 
     n = len(images)
     chunk_size = s_cfg.get('chunk_size', n)
-
+    overlap = int(s_cfg.get('chunk_overlap', 2))
+    overlap = min(overlap, chunk_size-1) # sanity check
 
     # --- Stitching timer start ---
     stitch_start = time.perf_counter()
@@ -86,17 +95,23 @@ def build_mosaic(images_dir: str, cfg: dict, include_homography: bool = False) -
     # chunked stitching
     print(f"[INFO] build_mosaic: stitching {n} images in mode '{mode_str}', chunk_size={chunk_size}, resize_factor={resize_factor}")
     partials = []
-    for batch_idx, start in enumerate(range(0, n, chunk_size)):
-        batch = images[start:start + chunk_size]
+    for batch_idx, (start, end) in enumerate(_iter_chunks(n, chunk_size, overlap)):
+        batch = images[start:end]
         partial = _stitch_batch(batch, stitch_mode)
-        cv2.imwrite(str(partials_dir / f"partial_{batch_idx:03d}.jpg"), partial)
+        
+        # Pretty filename: include 0-based frame index range in name
+        start_idx = start
+        end_idx_inclusive = end - 1  # because [start, end) is half-open
+        fname = f"partial_{batch_idx:03d}({start_idx}-{end_idx_inclusive}).jpg"
+        cv2.imwrite(str(partials_dir / fname), partial)
         partials.append(partial)
 
         if n > 10 and batch_idx % 5 == 0:
-            print(f"[INFO] build_mosaic: stitched {batch_idx * len(batch)}/{n} frames into partials")
+            done = end
+            print(f"[INFO] build_mosaic: stitched frames [0..{done-1}]/{n} → {batch_idx+1} partials")
 
     # Final merge
-    mosaic = partials[0] if len(partials) == 1 else _stitch_batch(partials, stitch_mode)
+    mosaic = partials[0] if len(partials) == 1 else _stitch_batch(partials, cv2.Stitcher_PANORAMA)
 
 
     stitch_elapsed = time.perf_counter() - stitch_start

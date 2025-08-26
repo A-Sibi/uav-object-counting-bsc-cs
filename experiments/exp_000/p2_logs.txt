@@ -1,0 +1,42 @@
+Using existing frames in: data\interim\frames
+[INFO] detection: processed 11/119 images
+[INFO] detection: processed 21/119 images
+[INFO] detection: processed 31/119 images
+[INFO] detection: processed 41/119 images
+[INFO] detection: processed 51/119 images
+[INFO] detection: processed 61/119 images
+[INFO] detection: processed 71/119 images
+[INFO] detection: processed 81/119 images
+[INFO] detection: processed 91/119 images
+[INFO] detection: processed 101/119 images
+[INFO] detection: processed 111/119 images
+Building mosaic from data\interim\frames, include_homography=True
+[INFO] build_mosaic: stitching 119 images in mode 'SCANS', chunk_size=5, resize_factor=0.2
+[INFO] build_mosaic: stitched frames [0..4]/119 → 1 partials
+[INFO] build_mosaic: stitched frames [0..24]/119 → 6 partials
+[INFO] build_mosaic: stitched frames [0..44]/119 → 11 partials
+[INFO] build_mosaic: stitched frames [0..64]/119 → 16 partials
+[INFO] build_mosaic: stitched frames [0..84]/119 → 21 partials
+[INFO] build_mosaic: stitched frames [0..104]/119 → 26 partials
+[TIMER] build_mosaic: stitched 119 images in 120:46s
+[INFO] build_mosaic: computing frame->mosaic homographies (direct method)
+[INFO] build_mosaic (homography): processed 0/119 frames
+[INFO] build_mosaic (homography): processed 20/119 frames
+[INFO] build_mosaic (homography): processed 40/119 frames
+[INFO] build_mosaic (homography): processed 60/119 frames
+[INFO] build_mosaic (homography): processed 80/119 frames
+[INFO] build_mosaic (homography): processed 100/119 frames
+[INFO] build_mosaic: saved homographies to data\interim\homography\h_list_20250826_204819.json
+[TIMER] build_mosaic: computed 119 homographies in 00:18s
+[TIMER] build_mosaic: total time 121:16s
+[INFO] Postprocessing:   705 detections | on start
+[INFO] Postprocessing:   678 detections | after confidence filter (min=0.78)
+[INFO] Postprocessing:   576 detections | after size filter (low=2182.2, high=5918.6)
+[INFO] Postprocessing:    33 detections | after clustering (radius=45.4, IoU=0.50)
+[INFO] Postprocessing:    23 detections | after support filter (frames≥4 OR members≥6, dropped 10)
+[INFO] Postprocessing:    23 detections | after texture filter (std>15.0, edges>0.020)
+Detections saved to 'data\processed\p2_detections.json'
+Annotated image saved to 'data\processed\p2_result.jpg'
+[TIMER] Pipeline 2: total time 123:54s 
+Detected 23 cars in the mosaic.
+Pipeline 2 completed successfully.

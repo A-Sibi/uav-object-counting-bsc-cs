@@ -159,9 +159,18 @@ def main():
     )
 
 
-    # save_data
-    psd = subparsers.add_parser("save_data", help="Archive current processed data into experiments/")
-
+    p_save = subparsers.add_parser("save_data", help="Copy key data artifacts into experiments/<name>/")
+    p_save.add_argument(
+        "exp_name",
+        type=str,
+        default="exp_999",
+        help="Experiment subfolder name under 'experiments/', e.g., exp_001"
+    )
+    p_save.add_argument(
+    "-f", "--force",
+    action="store_true",
+    help="Force overwrite of existing files without confirmation"
+)
 
     args = parser.parse_args()
     cfg = load_config(args.config)
@@ -202,7 +211,7 @@ def main():
     elif args.command == 'batch_map':
         run_batch_map(args.dets_dir, args.homographies_dir, cfg, args.filter)
     elif args.command == 'save_data':
-        save_data()
+        save_data(args.exp_name, cfg, args.force)
     elif args.command == 'clear':
         run_clear(cfg, keep_interim=args.keep_interim, keep_processed=args.keep_processed)
     elif args.command == "annotate":

@@ -9,7 +9,8 @@ def project_detections(dets_per_frame, H_list, mosaic_shape=None):
 
     for i, dets in enumerate(dets_per_frame):
         Hf = H_list[i]
-        if Hf is None:  # skip frames whose H failed
+        if Hf is None or np.array_equal(Hf, np.eye(3)):  # skip frames whose H failed
+            print(f"[WARN] no homography for frame {i}, skipping detections...")
             continue
         for d in dets:
             x1_b, y1_b, x2_b, y2_b = d['x1'], d['y1'], d['x2'], d['y2']

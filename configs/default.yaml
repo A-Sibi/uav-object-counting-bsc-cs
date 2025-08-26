@@ -9,12 +9,15 @@ paths:
   interim_mosaic: data/interim/mosaic.jpg
   interim_homographies: data/interim/homography
   processed_image: data/processed/processed_image.jpg
-  processed_detections: data/processed/final_detections.json
-  gt_image: data/raw/gt_image.jpg
+  processed_detections: data/processed/processed_detections.json
+  all_detections_mapped: data/processed/all_detections_mapped.jpg
+  gt_image: data/raw/ground_truth.jpg
   gt_raw_annotations: data/interim/gt_raw_annotations.json
   gt_annotations: data/processed/gt_detections.json
-  p1_result: data/processed/p1_result.jpg
-  p2_result: data/processed/p2_result.jpg
+  p1_result: data/processed/RESULT_p1.jpg
+  p2_result: data/processed/RESULT_p2.jpg
+  p1_detections: data/processed/p1_detections.json
+  p2_detections: data/processed/p2_detections.json
   interim_pairs: experiments/pairs.txt
 
 video:
@@ -27,9 +30,10 @@ detect:
   YOLO:
     weight: yolov8n.pt
 
-stitch: # do a research on this
-  mode: SCANS
+stitch: # edit in diploma
+  mode: SCANS           # final stitching mode is PANORAMA
   chunk_size: 5
+  chunk_overlap: 1
   resize_factor: 0.5
 
 homography:

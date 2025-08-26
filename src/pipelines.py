@@ -57,7 +57,7 @@ def run_single_image_detect(image_path: str, cfg: dict[str, any]) -> None:
 
     # detections = detect_cars_YOLO(image_path, detect_cfg)
     detections = detect(image_path, cfg)
-
+    save_detections_json(detections, cfg["paths"]["processed_detections"])
     image_with_boxes =  draw_rich_boxes(load_np_image(image_path), detections)
 
 
@@ -176,7 +176,8 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any], filte
     # 7) Draw and save the results
     save_detections_json(projected_detections, cfg["paths"]["processed_detections"])
     image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
-    save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
+    out_path = cfg["paths"]["all_detections_mapped"] if not filter else cfg["paths"]["p2_result"]
+    save_np_image(image_with_boxes, out_path)
 
     # Timer for the entire pipeline
     total_elapsed = time.perf_counter() - total_start
@@ -185,7 +186,7 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any], filte
     print(f"[TIMER] Batch map: total time {total_minutes:02d}:{total_seconds:02d}s ")
 
     print(f"Detected {len(projected_detections)} cars in the mosaic.")
-    print(f"Annotated mosaic saved to '{cfg['paths']['processed_image']}'")
+    print(f"Annotated mosaic saved to '{out_path}'")
     print("Batch mapping completed.")
     
     return None
@@ -213,7 +214,8 @@ def run_pipeline1(video_path, cfg: dict[str, any]) -> None:
     image_with_boxes =  draw_rich_boxes(load_np_image(image_path), detections)
 
     # 4. Save results
-    save_detections_json(detections, cfg["paths"]["processed_detections"])
+    save_detections_json(detections, cfg["paths"]["p1_detections"])
+    print(f"Detections saved to '{cfg['paths']['p1_detections']}'")
     save_np_image(image_with_boxes, cfg["paths"]["p1_result"])
     print(f"Annotated image saved to '{cfg['paths']['p1_result']}'")
 
@@ -271,12 +273,13 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
 
     # remove excessive detections
     projected_detections = clean_projected_detections(mosaic, projected_detections, cfg)
-    save_detections_json(projected_detections, cfg["paths"]["processed_detections"])
+    save_detections_json(projected_detections, cfg["paths"]["p2_detections"])
+    print(f"Detections saved to '{cfg['paths']['p2_detections']}'")
     image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
 
     # 5. Save results
-    save_np_image(image_with_boxes, cfg["paths"]["processed_image"])
-    print(f"Annotated image saved to '{cfg['paths']['processed_image']}'")
+    save_np_image(image_with_boxes, cfg["paths"]["p2_result"])
+    print(f"Annotated image saved to '{cfg['paths']['p2_result']}'")
 
     
     # Timer for the entire pipeline
@@ -290,13 +293,88 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     return None
 
 
-def save_data() -> None:
+def save_data(exp_name: str, cfg: dict, force: bool = False) -> None:
     """
-    Save processed data as a new experiment.
+    Copy experiment-related files into experiments/<exp_name>.
+    Warn if destination exists. Prompt unless --force is given.
     """
+    keys_to_save = [
+        "interim_mosaic",
+        "processed_detections",
+        "all_detections_mapped",
+        "gt_image",
+        "gt_raw_annotations",
+        "gt_annotations",
+        "p1_result",
+        "p2_result",
+        "p1_detections",
+        "p2_detections"
+    ]
 
-    raise NotImplementedError("Data saving is not implemented yet.")
+    paths_cfg = (cfg or {}).get("paths", {})
+    exp_root = Path("experiments") / exp_name
+    exp_root.mkdir(parents=True, exist_ok=True)
 
+    # Special handling for homographies - only save latest
+    if "interim_homographies" in paths_cfg:
+        homog_dir = Path(paths_cfg["interim_homographies"])
+        if homog_dir.exists():
+            latest_homog = latest_json_file(homog_dir)
+            if latest_homog:
+                dst = exp_root / latest_homog.name
+                if dst.exists():
+                    if force:
+                        print(f"[OVERWRITE] {dst}")
+                    else:
+                        ans = input(f"[WARN] destination file exists: {dst}. Overwrite? [y/N] ")
+                        if ans.lower() != "y":
+                            print("[SKIP] kept existing file")
+                        else:
+                            shutil.copy2(latest_homog, dst)
+                            print(f"[INFO] saved latest homography: {latest_homog} -> {dst}")
+                else:
+                    shutil.copy2(latest_homog, dst)
+                    print(f"[INFO] saved latest homography: {latest_homog} -> {dst}")
+
+    for key in keys_to_save:
+        src_str = paths_cfg.get(key)
+        if not src_str:
+            print(f"[WARN] config missing key: {key}")
+            continue
+
+        src = Path(src_str)
+        if not src.exists():
+            print(f"[WARN] no file: {src}")
+            continue
+
+        if src.is_dir():
+            dst = exp_root / src.name
+            if dst.exists():
+                if force:
+                    shutil.rmtree(dst)
+                    print(f"[OVERWRITE] {dst}")
+                else:
+                    ans = input(f"[WARN] destination folder exists: {dst}. Overwrite? [y/N] ")
+                    if ans.lower() != "y":
+                        print("[SKIP] kept existing folder")
+                        continue
+                    shutil.rmtree(dst)
+            shutil.copytree(src, dst)
+            print(f"[INFO] saved: {src} -> {dst}")
+        else:
+            dst = exp_root / src.name
+            if dst.exists():
+                if force:
+                    print(f"[OVERWRITE] {dst}")
+                else:
+                    ans = input(f"[WARN] destination file exists: {dst}. Overwrite? [y/N] ")
+                    if ans.lower() != "y":
+                        print("[SKIP] kept existing file")
+                        continue
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            print(f"[INFO] saved: {src} -> {dst}")
+    print(f"[INFO] All relevant files copied to experiments/{exp_name}/")
 
 def run_clear(cfg: dict, keep_interim=False, keep_processed=False) -> None:
     """

@@ -1,4 +1,6 @@
-### Example experiment output layout
+# Random notes
+
+## Example experiment output layout
 
 Each pipeline run should create a new experiment directory and record the configuration used. A recommended structure:
 
@@ -14,7 +16,7 @@ exp_001/
 
 Optionally include a timestamp in the folder name (e.g., `exp_20250801_1500/`) and a `README.md` summarizing the experiment.
 
-### Tuning tips
+## Tuning tips
 
 * Speed first: feature=ORB, matcher=BF, method=RANSAC, reproj_thresh=4.0, ratio=0.75.
 
@@ -26,6 +28,10 @@ Optionally include a timestamp in the folder name (e.g., `exp_20250801_1500/`) a
 
 This keeps your homography computation fully aligned with the YAML config, and matches the knobs you care about for your thesis experiments.
 
-# transitive clustering for dual detections?
+### transitive clustering for dual detections?
 
-# smarter chunking with overlap?
+Why your result bent by ~10°:
+
+Stitcher (even in SCANS) still estimates camera parameters pairwise and performs bundle-like adjustments that can over-fit on outliers, especially when textures repeat (rows of cars, lane lines). Once one partial tilts slightly, the next aligns to the tilted one and the error propagates. The global anchor + similarity model removes degrees of freedom that cause that bend.
+
+Moving cars are ignored on videos compared to a single image, additional time variance information.
