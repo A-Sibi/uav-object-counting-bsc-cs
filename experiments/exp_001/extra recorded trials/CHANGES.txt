@@ -1,0 +1,23 @@
+homography:
+  compute: direct        # direct | chain
+  feature:               # --- keypoint/descriptor extraction ---
+    type: ORB            # ORB | SIFT
+    nfeatures: 4000
+  match:                 # --- descriptor matching + ratio test ---
+    strategy: AUTO       # AUTO | BF | FLANN  (AUTO: BF+Hamming for ORB, FLANN for SIFT)
+    knn_k: 2             # 2 for Lowe's ratio test
+    ratio: 0.7           # Lowe's ratio threshold (lower = stricter)
+  estimate:              # --- robust H estimation ---
+    method: USAC_MAGSAC  # RANSAC | LMEDS | USAC_MAGSAC | USAC_ACCURATE | USAC_FAST
+    reproj_thresh: 4.0   # px
+    confidence: 0.999
+    max_iters: 10000
+    min_inliers: 10      # reject H if too few inliers
+
+
+After this experiment we changed:
+ORB -> SIFT
+AUTO -> FLANN
+4.0 -> 3.0 (reproj_thresh)
+
+all_detections_mapped_2 yielded suprisingly good end result given how chaotic it looks. 

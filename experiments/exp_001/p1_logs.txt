@@ -1,0 +1,18 @@
+Running Pipeline 1...
+[INFO] Extracting from: data\raw\test2.mp4, total frames: 1640, using step=30
+[INFO] Extracted 20/54 frames
+[INFO] Extracted 40/54 frames
+[INFO] Extracted 55 frames to data\interim\frames in 0m 51s.
+Building mosaic from data\interim\frames, include_homography=False
+[INFO] build_mosaic: stitching 55 images in mode 'SCANS', chunk_size=5, resize_factor=0.5
+[INFO] build_mosaic: stitched frames [0..4]/55 → 1 partials
+[INFO] build_mosaic: stitched frames [0..24]/55 → 6 partials
+[INFO] build_mosaic: stitched frames [0..44]/55 → 11 partials
+[TIMER] build_mosaic: stitched 55 images in 01:22s
+[INFO] build_mosaic: skipping homography computation
+[TIMER] build_mosaic: total time 01:26s
+Detections saved to 'data\processed\p1_detections.json'
+Annotated image saved to 'data\processed\RESULT_p1.jpg'
+[TIMER] Pipeline 1: total time 02:50s
+Detected 65 cars in the mosaic.
+Pipeline 1 completed successfully.

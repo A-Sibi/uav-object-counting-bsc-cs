@@ -1,0 +1,41 @@
+Running Pipeline 2...
+Using existing frames in: data\interim\frames
+[INFO] detection: processed 11/55 images
+[INFO] detection: processed 21/55 images
+[INFO] detection: processed 31/55 images
+[INFO] detection: processed 41/55 images
+[INFO] detection: processed 51/55 images
+Building mosaic from data\interim\frames, include_homography=True
+[INFO] build_mosaic: stitching 55 images in mode 'SCANS', chunk_size=5, resize_factor=0.5
+[INFO] build_mosaic: stitched frames [0..4]/55 → 1 partials
+[INFO] build_mosaic: stitched frames [0..24]/55 → 6 partials
+[INFO] build_mosaic: stitched frames [0..44]/55 → 11 partials
+[TIMER] build_mosaic: stitched 55 images in 01:24s
+[INFO] build_mosaic: computing frame->mosaic homographies (direct method)
+[INFO] build_mosaic (homography): processed 0/55 frames
+[WARN] frame 13: homography failed (Too few inliers: 5); marking with identity matrix I.
+[WARN] frame 14: homography failed (Too few inliers: 6); marking with identity matrix I.
+[INFO] build_mosaic (homography): processed 20/55 frames
+[WARN] frame 34: homography failed (Too few inliers: 9); marking with identity matrix I.
+[WARN] frame 35: homography failed (Too few inliers: 7); marking with identity matrix I.
+[INFO] build_mosaic (homography): processed 40/55 frames
+[WARN] frame 54: homography failed (Too few inliers: 6); marking with identity matrix I.
+[INFO] build_mosaic: saved homographies to data\interim\homography\h_list_20250826_215008.json
+[TIMER] build_mosaic: computed 55 homographies in 00:23s
+[TIMER] build_mosaic: total time 01:51s
+[WARN] no homography for frame 13, skipping detections...
+[WARN] no homography for frame 14, skipping detections...
+[WARN] no homography for frame 34, skipping detections...
+[WARN] no homography for frame 35, skipping detections...
+[WARN] no homography for frame 54, skipping detections...
+[INFO] Postprocessing:  1197 detections | on start
+[INFO] Postprocessing:  1117 detections | after confidence filter (min=0.78)
+[INFO] Postprocessing:   949 detections | after size filter (low=9053.6, high=32920.9)
+[INFO] Postprocessing:   145 detections | after clustering (radius=78.5, IoU=0.50)
+[INFO] Postprocessing:    76 detections | after support filter (frames≥4 OR members≥6, dropped 69)
+[INFO] Postprocessing:    71 detections | after texture filter (std>15.0, edges>0.020)
+Detections saved to 'data\processed\p2_detections.json'
+Annotated image saved to 'data\processed\RESULT_p2.jpg'
+[TIMER] Pipeline 2: total time 03:12s 
+Detected 71 cars in the mosaic.
+Pipeline 2 completed successfully.

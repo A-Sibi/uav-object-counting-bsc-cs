@@ -1,0 +1,55 @@
+Running Pipeline 2...
+Using existing frames in: data\interim\frames
+TracerWarning: Iterating over a tensor might cause the trace to be incorrect. Passing a tensor of different shape won't change the number of iterations executed (and might lead to errors or silently give incorrect results).
+[INFO] detection: processed 11/55 images
+[INFO] detection: processed 21/55 images
+[INFO] detection: processed 31/55 images
+[INFO] detection: processed 41/55 images
+[INFO] detection: processed 51/55 images
+Building mosaic from data\interim\frames, include_homography=True
+[INFO] build_mosaic: stitching 55 images in mode 'SCANS', chunk_size=5, resize_factor=0.5
+[INFO] build_mosaic: stitched frames [0..4]/55 → 1 partials
+[INFO] build_mosaic: stitched frames [0..24]/55 → 6 partials
+[INFO] build_mosaic: stitched frames [0..44]/55 → 11 partials
+[TIMER] build_mosaic: stitched 55 images in 01:22s
+[INFO] build_mosaic: computing frame->mosaic homographies (direct method)
+[INFO] build_mosaic (homography): processed 0/55 frames
+[WARN] frame 13: homography failed (Too few inliers: 9); marking with identity matrix I.
+[WARN] frame 14: homography failed (Too few inliers: 9); marking with identity matrix I.
+[INFO] build_mosaic (homography): processed 20/55 frames
+[INFO] build_mosaic (homography): processed 20/55 frames
+[INFO] build_mosaic (homography): processed 40/55 frames
+[INFO] build_mosaic: saved homographies to data\interim\homography\h_list_20250826_224634.json
+[TIMER] build_mosaic: computed 55 homographies in 03:04s
+[TIMER] build_mosaic: total time 04:31s
+[WARN] no homography for frame 13, skipping detections...
+[WARN] no homography for frame 13, skipping detections...
+[WARN] no homography for frame 14, skipping detections...
+[INFO] Postprocessing:  1186 detections | on start
+[INFO] Postprocessing:  1106 detections | after confidence filter (min=0.78)
+[INFO] Postprocessing:  1186 detections | on start
+[INFO] Postprocessing:  1106 detections | after confidence filter (min=0.78)
+[INFO] Postprocessing:   939 detections | after size filter (low=8935.9, high=19972.6)
+[INFO] Postprocessing:  1106 detections | after confidence filter (min=0.78)
+[INFO] Postprocessing:   939 detections | after size filter (low=8935.9, high=19972.6)
+[INFO] Postprocessing:   939 detections | after size filter (low=8935.9, high=19972.6)
+[INFO] Postprocessing:   123 detections | after clustering (radius=75.7, IoU=0.50)
+[INFO] Postprocessing:    71 detections | after support filter (frames≥4 OR members≥6, dropped 52)
+[INFO] Postprocessing:    70 detections | after texture filter (std>15.0, edges>0.020)
+Detections saved to 'data\processed\p2_detections.json'
+Annotated image saved to 'data\processed\RESULT_p2.jpg'
+[TIMER] Pipeline 2: total time 05:54s
+Detected 70 cars in the mosaic.
+[TIMER] Pipeline 2: total time 05:54s
+[TIMER] Pipeline 2: total time 05:54s
+[TIMER] Pipeline 2: total time 05:54s
+Detected 70 cars in the mosaic.
+[TIMER] Pipeline 2: total time 05:54s
+Detected 70 cars in the mosaic.
+[TIMER] Pipeline 2: total time 05:54s
+[TIMER] Pipeline 2: total time 05:54s
+[TIMER] Pipeline 2: total time 05:54s
+Detected 70 cars in the mosaic.
+Pipeline 2 completed successfully.
+
+### THIS IS RAW COPIED LOGS, WIERD DUPLICATION RUNTIME BUG?

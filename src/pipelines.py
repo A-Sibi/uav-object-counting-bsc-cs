@@ -248,9 +248,9 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
         )
     else:
         print(f"Using existing frames in: {frames_dir}")
-        frame_paths = sorted(frames_dir.glob("*.jpg"))
-        if not frame_paths:
-            raise FileNotFoundError(f"No frames found in {frames_dir}")
+    frame_paths = sorted(frames_dir.glob("*.jpg"))
+    if not frame_paths:
+        raise FileNotFoundError(f"No frames found in {frames_dir}")
     # 2. Detect cars in each frame
     frame_detections = []
     with torch.no_grad():
@@ -270,6 +270,11 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     
     # 4. Map detections to the mosaic
     projected_detections = project_detections(frame_detections, H_list, mosaic_shape=mosaic.shape[:2])
+    save_detections_json(projected_detections, cfg["paths"]["interim_all_detections"])
+    all_dets_image = draw_translated_boxes(mosaic.copy(), projected_detections)
+    save_np_image(all_dets_image, cfg["paths"]["all_detections_mapped"])
+
+
 
     # remove excessive detections
     projected_detections = clean_projected_detections(mosaic, projected_detections, cfg)

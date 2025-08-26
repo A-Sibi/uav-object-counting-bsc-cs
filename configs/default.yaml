@@ -6,11 +6,12 @@ paths:
   interim_partials: data/interim/partials
   interim_detections: data/interim/detections
   interim_detections_batch: data/interim/detections_batch
+  interim_all_detections: data/interim/all_detections.json
   interim_mosaic: data/interim/mosaic.jpg
   interim_homographies: data/interim/homography
   processed_image: data/processed/processed_image.jpg
   processed_detections: data/processed/processed_detections.json
-  all_detections_mapped: data/processed/all_detections_mapped.jpg
+  all_detections_mapped: data/processed/p2_all_detections_mapped.jpg
   gt_image: data/raw/ground_truth.jpg
   gt_raw_annotations: data/interim/gt_raw_annotations.json
   gt_annotations: data/processed/gt_detections.json
@@ -39,15 +40,15 @@ stitch: # edit in diploma
 homography:
   compute: direct        # direct | chain
   feature:               # --- keypoint/descriptor extraction ---
-    type: ORB            # ORB | SIFT
+    type: SIFT            # ORB | SIFT
     nfeatures: 4000
   match:                 # --- descriptor matching + ratio test ---
-    strategy: AUTO       # AUTO | BF | FLANN  (AUTO: BF+Hamming for ORB, FLANN for SIFT)
+    strategy: FLANN       # AUTO | BF | FLANN  (AUTO: BF+Hamming for ORB, FLANN for SIFT)
     knn_k: 2             # 2 for Lowe's ratio test
     ratio: 0.7           # Lowe's ratio threshold (lower = stricter)
   estimate:              # --- robust H estimation ---
     method: USAC_MAGSAC  # RANSAC | LMEDS | USAC_MAGSAC | USAC_ACCURATE | USAC_FAST
-    reproj_thresh: 4.0   # px
+    reproj_thresh: 3.0   # px
     confidence: 0.999
     max_iters: 10000
     min_inliers: 10      # reject H if too few inliers
