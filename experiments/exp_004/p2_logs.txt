@@ -1,0 +1,36 @@
+Running Pipeline 2...
+Using existing frames in: data\interim\frames
+Loading pretrain weights
+[INFO] detection: processed 11/83 images
+[INFO] detection: processed 21/83 images
+[INFO] detection: processed 31/83 images
+[INFO] detection: processed 41/83 images
+[INFO] detection: processed 51/83 images
+[INFO] detection: processed 61/83 images
+[INFO] detection: processed 71/83 images
+[INFO] detection: processed 81/83 images
+Building mosaic from data\interim\frames, include_homography=True
+[INFO] build_mosaic: stitching 83 images in mode 'SCANS', chunk_size=5, resize_factor=0.5
+[INFO] build_mosaic: stitched frames [0..4]/83 → 1 partials
+[INFO] build_mosaic: stitched frames [0..24]/83 → 6 partials
+[INFO] build_mosaic: stitched frames [0..44]/83 → 11 partials
+[INFO] build_mosaic: stitched frames [0..64]/83 → 16 partials
+[INFO] build_mosaic: stitched frames [0..82]/83 → 21 partials
+[TIMER] build_mosaic: stitched 83 images in 07:02s
+[INFO] build_mosaic: computing frame->mosaic homographies (direct method)
+[INFO] build_mosaic (homography): processed 20/83 frames
+[INFO] build_mosaic (homography): processed 40/83 frames
+[INFO] build_mosaic (homography): processed 60/83 frames
+[INFO] build_mosaic: saved homographies to data\interim\homography\h_list_20250827_052342.json
+[TIMER] build_mosaic: computed 83 homographies in 03:14s
+[INFO] Postprocessing:  3382 detections | on start
+[INFO] Postprocessing:  2889 detections | after confidence filter (min=0.78)
+[SKIP] Size filter disabled
+[INFO] Postprocessing:   252 detections | after clustering (radius=51.7, IoU=0.50)
+[INFO] Postprocessing:   110 detections | after support filter (frames≥4 OR members≥6, dropped 142)
+[INFO] Postprocessing:    96 detections | after texture filter (std>15.0, edges>0.020)
+Detections saved to 'data\processed\p2_detections.json'
+Annotated image saved to 'data\processed\RESULT_p2.jpg'
+[TIMER] Pipeline 2: total time 12:31s
+Detected 96 cars in the mosaic.
+Pipeline 2 completed successfully.

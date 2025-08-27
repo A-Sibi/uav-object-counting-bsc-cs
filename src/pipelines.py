@@ -175,6 +175,7 @@ def run_batch_map(dets_dir: str, homography_dir: str, cfg: dict[str, any], filte
 
     # 7) Draw and save the results
     save_detections_json(projected_detections, cfg["paths"]["processed_detections"])
+    print(f"Processed detections saved to: {cfg['paths']['processed_detections']}")
     image_with_boxes = draw_translated_boxes(mosaic, projected_detections)
     out_path = cfg["paths"]["all_detections_mapped"] if not filter else cfg["paths"]["p2_result"]
     save_np_image(image_with_boxes, out_path)
@@ -251,12 +252,22 @@ def run_pipeline2(video_path, cfg: dict[str, any]) -> None:
     frame_paths = sorted(frames_dir.glob("*.jpg"))
     if not frame_paths:
         raise FileNotFoundError(f"No frames found in {frames_dir}")
+    
     # 2. Detect cars in each frame
+    dets_dir = Path(cfg["paths"]["interim_detections"])
+    dets_dir.mkdir(parents=True, exist_ok=True)
+    
     frame_detections = []
     with torch.no_grad():
         for i, frame_path in enumerate(frame_paths, start=1):
             detections = detect(frame_path, cfg)
             frame_detections.append(detections)
+
+            out_path = Path(cfg["paths"]["interim_detections"]) / f"{frame_path.stem}.json"
+            clean = [{k: float(v) for k,v in d.items()} for d in detections]
+            with open(out_path, 'w') as f:
+                json.dump(clean, f, indent=2)
+
 
             if i % 10 == 0:
                 print(f"[INFO] detection: processed {i + 1}/{len(frame_paths)} images")
@@ -367,7 +378,13 @@ def save_data(exp_name: str, cfg: dict, force: bool = False) -> None:
             shutil.copytree(src, dst)
             print(f"[INFO] saved: {src} -> {dst}")
         else:
-            dst = exp_root / src.name
+            # --- JSON files go into subfolder json/ ---
+            if src.suffix.lower() == ".json":
+                dst_dir = exp_root / "json"
+                dst_dir.mkdir(parents=True, exist_ok=True)
+                dst = dst_dir / src.name
+            else:
+                dst = exp_root / src.name
             if dst.exists():
                 if force:
                     print(f"[OVERWRITE] {dst}")

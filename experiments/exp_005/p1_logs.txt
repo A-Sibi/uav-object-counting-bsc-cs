@@ -1,0 +1,21 @@
+Running Pipeline 1...
+[INFO] Extracting from: data\raw\test7.mp4, total frames: 1978, using step=30
+[INFO] Extracted 20/65 frames
+[INFO] Extracted 40/65 frames
+[INFO] Extracted 60/65 frames
+[INFO] Extracted 66 frames to data\interim\frames in 1m 23s.
+Building mosaic from data\interim\frames, include_homography=False
+[INFO] build_mosaic: stitching 66 images in mode 'SCANS', chunk_size=5, resize_factor=0.5
+[INFO] build_mosaic: stitched frames [0..4]/66 → 1 partials
+[INFO] build_mosaic: stitched frames [0..24]/66 → 6 partials
+[INFO] build_mosaic: stitched frames [0..44]/66 → 11 partials
+[INFO] build_mosaic: stitched frames [0..64]/66 → 16 partials
+[TIMER] build_mosaic: stitched 66 images in 02:47s
+[INFO] build_mosaic: skipping homography computation
+[TIMER] build_mosaic: total time 02:52s
+Loading pretrain weights
+Detections saved to 'data\processed\p1_detections.json'
+Annotated image saved to 'data\processed\RESULT_p1.jpg'
+[TIMER] Pipeline 1: total time 04:38s
+Detected 66 cars in the mosaic.
+Pipeline 1 completed successfully.

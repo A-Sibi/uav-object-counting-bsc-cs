@@ -1,16 +1,15 @@
-data/processed/final_detections.json vs data/processed/gt_detections.json: TP=22 FP=3 FN=1 | P=0.880 R=0.957 F1=0.917 | AP@0.50=0.897 | #pred=25 #gt=23 diff=2 rel_err=8.70%
+Running evaluation with IoU=0.50 and pairs file: experiments\pairs.txt
+experiments/exp_000/json/p1_detections.json vs experiments/exp_000/json/gt_detections.json: TP=23 FP=0 FN=0 | P=1.000 R=1.000 F1=1.000 | AP@0.50=1.000 | #pred=23 #gt=23 diff=0 rel_err=0.00%
+experiments/exp_000/json/p2_detections.json vs experiments/exp_000/json/gt_detections.json: TP=22 FP=1 FN=1 | P=0.957 R=0.957 F1=0.957 | AP@0.50=0.992 | #pred=23 #gt=23 diff=0 rel_err=0.00%
+experiments/exp_002/json/p1_detections.json vs experiments/exp_002/json/gt_detections.json: TP=91 FP=15 FN=15 | P=0.858 R=0.858 F1=0.858 | AP@0.50=0.900 | #pred=106 #gt=106 diff=0 rel_err=0.00%
+experiments/exp_002/json/p2_detections.json vs experiments/exp_002/json/gt_detections.json: TP=83 FP=23 FN=23 | P=0.783 R=0.783 F1=0.787 | AP@0.50=0.825 | #pred=106 #gt=106 diff=0 rel_err=0.00%
+experiments/exp_003/json/p1_detections_roi.json vs experiments/exp_003/json/gt_detections.json: TP=21 FP=16 FN=16 | P=0.568 R=0.568 F1=0.609 | AP@0.50=0.712 | #pred=37 #gt=37 diff=0 rel_err=0.00%
+experiments/exp_003/json/p2_detections_roi.json vs experiments/exp_003/json/gt_detections.json: TP=23 FP=14 FN=14 | P=0.622 R=0.622 F1=0.630 | AP@0.50=0.729 | #pred=37 #gt=37 diff=0 rel_err=0.00%
+experiments/exp_004/json/p2_detections.json vs experiments/exp_004/json/gt_detections.json: TP=46 FP=50 FN=41 | P=0.479 R=0.529 F1=0.511 | AP@0.50=0.510 | #pred=96 #gt=87 diff=9 rel_err=10.34%
+experiments/exp_005/json/p1_detections.json vs experiments/exp_005/json/gt_detections.json: TP=62 FP=4 FN=3 | P=0.939 R=0.954 F1=0.947 | AP@0.50=0.943 | #pred=66 #gt=65 diff=1 rel_err=1.54%
+experiments/exp_005/json/p2_detections.json vs experiments/exp_005/json/gt_detections.json: TP=49 FP=11 FN=16 | P=0.817 R=0.754 F1=0.784 | AP@0.50=0.873 | #pred=60 #gt=65 diff=-5 rel_err=-7.69%
 
 == AVERAGE over all ==
-macro: P=0.880 R=0.957 F1=0.917 AP@0.50=0.897
-counts: #pred(avg)=25.00 #gt(avg)=23.00 diff(avg)=2.00 rel_err(avg)=8.70%
-micro:  P=0.880 R=0.957 F1=0.917  |  #pred=25 #gt=23 diff=2 rel_err=8.70%
-
----
-
-experiments/exp_000/p1_detections.json vs experiments/exp_000/gt_detections.json: TP=23 FP=0 FN=0 | P=1.000 R=1.000 F1=1.000 | AP@0.50=1.000 | #pred=23 #gt=23 diff=0 rel_err=0.00%
-experiments/exp_000/p2_detections.json vs experiments/exp_000/gt_detections.json: TP=22 FP=1 FN=1 | P=0.957 R=0.957 F1=0.957 | AP@0.50=0.992 | #pred=23 #gt=23 diff=0 rel_err=0.00%
-
-== AVERAGE over all ==
-macro: P=0.978 R=0.978 F1=0.978 AP@0.50=0.996
-counts: #pred(avg)=23.00 #gt(avg)=23.00 diff(avg)=0.00 rel_err(avg)=0.00%
-micro:  P=0.978 R=0.978 F1=0.978  |  #pred=46 #gt=46 diff=0 rel_err=0.00%
+macro: P=0.741 R=0.748 F1=0.750 AP@0.50=0.789
+counts: #pred(avg)=65.80 #gt(avg)=63.60 diff(avg)=2.20 rel_err(avg)=2.37%
+micro:  P=0.699 R=0.723 F1=0.711  |  #pred=658 #gt=636 diff=22 rel_err=3.46%
