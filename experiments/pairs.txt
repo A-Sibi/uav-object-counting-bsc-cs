@@ -1,12 +1,10 @@
 experiments/exp_000/json/p1_detections.json;experiments/exp_000/json/gt_detections.json
 experiments/exp_000/json/p2_detections.json;experiments/exp_000/json/gt_detections.json
+experiments/exp_001/json/p1_detections.json;experiments/exp_001/json/gt_detections.json
+experiments/exp_001/json/p2_detections.json;experiments/exp_001/json/gt_detections.json
 experiments/exp_002/json/p1_detections.json;experiments/exp_002/json/gt_detections.json
 experiments/exp_002/json/p2_detections.json;experiments/exp_002/json/gt_detections.json
-experiments/exp_003/json/p1_detections_roi.json;experiments/exp_003/json/gt_detections.json
-experiments/exp_003/json/p2_detections_roi.json;experiments/exp_003/json/gt_detections.json
-experiments/exp_004/json/p1_detections.json;experiments/exp_004/json/gt_detections.json
-experiments/exp_004/json/p2_detections.json;experiments/exp_004/json/gt_detections.json
-experiments/exp_005/json/p1_detections.json;experiments/exp_005/json/gt_detections.json
-experiments/exp_005/json/p2_detections.json;experiments/exp_005/json/gt_detections.json
+experiments/exp_003/json/p1_detections.json;experiments/exp_003/json/gt_detections.json
+experiments/exp_003/json/p2_detections.json;experiments/exp_003/json/gt_detections.json
 experiments/exp_006/json/p1_detections.json;experiments/exp_006/json/gt_detections.json
 experiments/exp_006/json/p2_detections.json;experiments/exp_006/json/gt_detections.json

@@ -1,0 +1,2 @@
+Since each video is around 300 MB or larger, they are not stored on GitHub.  
+I recommend keeping the videos only locally when running experiments.

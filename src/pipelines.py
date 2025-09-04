@@ -434,15 +434,23 @@ def run_annotate(
     Also writes a raw JSON of the clicked boxes for traceability.
     """
 
-    final_out = cfg["paths"].get("gt_annotations", "data/processed/gt_detections.json") if out_path is None else out_path
+    final_out = Path(out_path) if out_path is not None else Path(
+        cfg["paths"].get("gt_annotations", "data/processed/gt_detections.json")
+    )
+    final_out.parent.mkdir(parents=True, exist_ok=True)
 
     if on_mosaic:
         print("Annotating directly on the mosaic (no homography).")
-        # click on mosaic, save as-is (already in mosaic coords)
-        raw_json = cfg["paths"].get("gt_annotations", "data/processed/gt_detections.json")
+        # raw clicks go to a *different* temp file
+        raw_json = Path(cfg["paths"].get("gt_raw_annotations", "data/interim/gt_raw_annotations.json"))
+        raw_json.parent.mkdir(parents=True, exist_ok=True)
+
         saved = annotate_image(str(mosaic), str(raw_json))
-        with open(saved, "r", encoding="utf-8") as f_in, open(final_out, "w", encoding="utf-8") as f_out:
-            json.dump(json.load(f_in), f_out, indent=2)
+
+        # If the raw file is not the same as the final, copy it.
+        if Path(saved).resolve() != final_out.resolve():
+            shutil.copyfile(saved, final_out)
+        # If they are the same path, do nothing (already written by annotate_image)
         print(f"[EVAL] GT saved → {final_out}")
         return
 

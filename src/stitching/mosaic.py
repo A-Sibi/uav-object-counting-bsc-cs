@@ -111,7 +111,7 @@ def build_mosaic(images_dir: str, cfg: dict, include_homography: bool = False) -
             print(f"[INFO] build_mosaic: stitched frames [0..{done-1}]/{n} → {batch_idx+1} partials")
 
     # Final merge
-    mosaic = partials[0] if len(partials) == 1 else _stitch_batch(partials, cv2.Stitcher_PANORAMA)
+    mosaic = partials[0] if len(partials) == 1 else _stitch_batch(partials, cv2.Stitcher_SCANS)
 
 
     stitch_elapsed = time.perf_counter() - stitch_start

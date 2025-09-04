@@ -338,9 +338,19 @@ With the venv active (`poetry shell`), run:
 src/                    
 ├── cli.py              # CLI entry point
 ├── pipelines.py        # Orchestrates both pipelines and module runs
-├── detection/
-│   └── detector.py     # Detectors: RB Vehicle (default) + YOLO option
-├── eval/               # (Planned) Evaluation metrics and comparison logic
+├── detection/          # Detectors and related modules
+│   ├── detectors/      # Specific detector implementations (e.g. YOLO, RB Vehicle)
+│   │   ├── rb_vehicle.py
+│   │   └── yolo.py
+│   ├── __init__.py     # Entry: choose RB Vehicle (default) or YOLO
+│   ├── detect.py       # Main detection call (imported in pipelines)
+│   ├── types.py        # Type definitions (Detection, TranslatedDetection)
+│   └── postprocess.py  # Filters: merging duplicates, support, texture ...
+├── eval/               # (Not essential) Evaluation metrics and comparison logic
+│   ├── annotate_gt.py  # Draws ground truth boxes on mosaic for visual comparison
+│   ├── eval_mosaic.py  # Evaluation routines (precision, recall, F1)
+│   ├── metrics.py      # Evaluation metrics (e.g. IoU, precision)
+│   └── plot.py         # Evaluation plots (e.g. precision-recall curves)
 ├── mapping/
 │   └── project.py      # Projects frame detections onto the mosaic via homographies
 ├── stitching/
@@ -361,9 +371,25 @@ data/
 ├── interim/            # Extracted frames, mosaics, temporary files
 └── processed/          # Final outputs, visualizatons, results
 
-experiments/            # Stored results and logs (e.g. annotated mosaics, CSVs)
-├── exp_001/            # Grouped by experiments
-│   ...
+experiments/            # Archived results and logs, grouped by experiment
+├── exp_001/
+│   ├── json/                   # Detection results and annotations
+│   │   ├── p1_detections.json  # Raw detections from pipeline 1
+│   │   ├── p2_detections.json  # Filtered detections from pipeline 2
+│   │   ├── gt_detections.json  # Ground-truth boxes (mosaic coords)
+│   │   └── h_list.json         # Latest frame→mosaic homographies
+│   ├── ground_truth.jpg        # Reference image
+│   ├── mosaic.jpg              # Final stitched mosaic
+│   ├── overlay_p1.jpg          # Mosaic with overlayed p1 and gt boxes
+│   ├── overlay_p2.jpg          # Mosaic with overlayed p2 and gt
+│   ├── RESULT_p1.jpg           # Annotated mosaic from pipeline 1
+│   ├── RESULT_p2.jpg           # Annotated mosaic from pipeline 2
+│   ├── p1_logs.txt             # Stdout log from pipeline 1 run
+│   ├── p2_logs.txt             # Stdout log from pipeline 2 run
+│   ├── README.md               # Notes about this experiment
+│   ├── p2_all_detections_mapped.jpg  # Mosaic with all p2 detections (no filtering)
+└── exp_002/
+    └── ...
 ```
 
 ---
@@ -378,26 +404,82 @@ paths:
   interim_partials: data/interim/partials
   interim_detections: data/interim/detections
   interim_detections_batch: data/interim/detections_batch
+  interim_all_detections: data/interim/all_detections.json
   interim_mosaic: data/interim/mosaic.jpg
   interim_homographies: data/interim/homography
   processed_image: data/processed/processed_image.jpg
-  results: experiments
+  processed_detections: data/processed/processed_detections.json
+  all_detections_mapped: data/processed/p2_all_detections_mapped.jpg
+  gt_image: data/raw/ground_truth.jpg
+  gt_raw_annotations: data/interim/gt_raw_annotations.json
+  gt_annotations: data/processed/gt_detections.json
+  p1_result: data/processed/RESULT_p1.jpg
+  p2_result: data/processed/RESULT_p2.jpg
+  p1_detections: data/processed/p1_detections.json
+  p2_detections: data/processed/p2_detections.json
+  interim_pairs: experiments/pairs.txt
 
 video:
-  frame_step: 30
-
-stitch:
-  feature: ORB           # 'SIFT' or 'ORB' for homography feature extraction
-  reproj_thresh: 4.0     # RANSAC reprojection threshold (px)
-  resize_factor: 1       # 0<scale≤1; frames are downscaled before stitching
-  chunk_size: 5          # stitch in batches, then merge partials
-  timeout: 300           # not currently enforced in code, reserved
-  mode: SCANS            # 'PANORAMA' or 'SCANS' for cv2.Stitcher
+  frame_step: 30       # take every 30th frame
 
 detect:
-  model: yolov8n.pt      # used only by the YOLO path
-  conf: 0.5              # confidence threshold (applied to both detectors)
-  iou: 0.5               # NMS threshold (YOLO only)
+  model: rb_vehicle     # {rb_vehicle, YOLO}
+  conf: 0.5             # detector confidence treshold
+  iou: 0.5
+  YOLO:
+    weight: yolov8n.pt
+
+stitch: # edit in diploma
+  mode: SCANS           # final stitching mode is PANORAMA
+  chunk_size: 5
+  chunk_overlap: 1
+  resize_factor: 0.5
+
+homography:
+  compute: direct        # direct | chain
+  feature:               # --- keypoint/descriptor extraction ---
+    type: SIFT            # ORB | SIFT
+    nfeatures: 4000
+  match:                 # --- descriptor matching + ratio test ---
+    strategy: FLANN       # AUTO | BF | FLANN  (AUTO: BF+Hamming for ORB, FLANN for SIFT)
+    knn_k: 2             # 2 for Lowe's ratio test
+    ratio: 0.7           # Lowe's ratio threshold (lower = stricter)
+  estimate:              # --- robust H estimation ---
+    method: USAC_MAGSAC  # RANSAC | LMEDS | USAC_MAGSAC | USAC_ACCURATE | USAC_FAST
+    reproj_thresh: 3.0   # px
+    confidence: 0.999
+    max_iters: 10000
+    min_inliers: 10      # reject H if too few inliers
+
+postprocess:
+  confidence:
+    run: true
+    conf_min: 0.78
+
+  size_quantiles:
+    run: false
+    size_low_q: 0.1
+    size_high_q: 0.95
+
+  proximity_clustering:
+    run: true
+    prox_factor: 0.45
+    iou_merge: 0.5
+
+  support:
+    run: true
+    min_support_frames: 4
+    min_support_members: 6
+
+  texture_rejection:
+    run: true
+    texture_min: 40
+    inner_shrink: 0.10
+    empty_std_max: 15
+    empty_edge_max: 0.02
+
+eval:
+  iou: 0.5
 ```
 
 Alternate config files can be used for experiments.
@@ -411,13 +493,10 @@ Alternate config files can be used for experiments.
 
 ## 📤 Outputs
 
-* `paths.interim_frames/` — extracted frames (`frame_00000.jpg`, …)
-* `paths.interim_partials/` — saved partial mosaics (chunked stitching)
-* `paths.interim_mosaic` — stitched mosaic image (JPG)
-* `paths.interim_homographies/*.json` — homography JSON (frame order, H matrices, meta)
-* `paths.interim_detections/*.json` — per-frame detection JSON
-* `paths.interim_detections_batch/*_annotated.jpg` — per-frame annotated previews
-* `paths.processed_image` — final annotated image (mosaic with boxes)
+* `RESULT_p1.jpg` — annotated mosaic from pipeline 1
+* `RESULT_p2.jpg` — annotated mosaic from pipeline 2
+* `p1_detections.json` — raw detections from pipeline 1
+* `p2_detections.json` — filtered detections from pipeline 2
 
 ---
 
@@ -437,24 +516,8 @@ Alternate config files can be used for experiments.
 
 ---
 
-## ✅ Current Status / Roadmap
-
-* [x] Pipeline 1 (mosaic‑first) run
-* [x] Pipeline 2 (frame‑first) with homography projection
-* [x] Batch detection and JSON serialization
-* [x] Homography JSON export + metadata
-* [x] Annotated outputs for frames & mosaic
-* [ ] Duplicate merging on mosaic (e.g., NMS/DBSCAN in mosaic space)
-* [ ] Result archiving (`save_data`) and experiment packaging
-* [ ] Evaluation suite (accuracy, runtime, stitching quality)
-* [ ] Optional: zone‑based counts / heatmaps
-
----
-
 ## 👤 Author
 
 **Aleksa Sibinović**
 University of Ljubljana
 Email: [as1871@student.uni-lj.si](mailto:as1871@student.uni-lj.si)
-
-> *This README is a living document. Update as features evolve.*
